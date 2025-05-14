@@ -1,47 +1,46 @@
 // server.js
 
-// Load environment variables from .env file
-require('dotenv').config(); // <<< Make sure this is at the very top
+// We remove require('dotenv').config(); because we are not loading from .env for the API key
 
 // Import necessary libraries
 const express = require('express');
-const axios = require('axios'); // <<< Import axios
+const axios = require('axios');
+const cors = require('cors');
 
 // Create an instance of an Express application
 const app = express();
 
+app.use(cors()); // Enable CORS for all routes
+
 // Define the port the server will run on
-const port = process.env.PORT || 3000;
-
-// In-memory user store
-const bcrypt = require('bcrypt');
-const users = {};
-
-// In-memory storage for favorites
-const jwt = require('jsonwebtoken');
-const collections = {};
+// Your frontend dashboard.html is trying to reach http://localhost:8080
+// So, let's set the backend to also use 8080 for consistency, or you can change the frontend.
+const port = process.env.PORT || 8080; // <<<< Adjusted to 8080 to match your dashboard.html
 
 // --- Your Root Route (keep it for basic checks) ---
 app.get('/', (req, res) => {
   res.send('Hello World! Your GameScape backend server is running.');
 });
 
-// --- NEW: Route for searching games on RAWG ---
+// --- Route for searching games on RAWG ---
 app.get('/api/games/search', async (req, res) => {
   // Get the search query from the URL (?query=...)
   const searchQuery = req.query.query; // e.g., 'elden ring'
-  const apiKey = process.env.RAWG_API_KEY;
 
-  // --- Input Validation ---
+  // API Key is now hardcoded here
+  const apiKey = '49019cbf03744419a483362b07d2f0a1'; // <<< YOUR API KEY IS DIRECTLY IN THE CODE
+
+  // --- Input Validation for searchQuery ---
   if (!searchQuery) {
     // If no search query is provided
     return res.status(400).json({ message: 'Search query is required' });
   }
 
+  // Although hardcoded, a check for an empty apiKey string might still be useful
   if (!apiKey) {
-    // If API key is missing in environment variables
-    console.error('RAWG API Key is missing. Make sure it is set in the .env file.');
-    return res.status(500).json({ message: 'Server configuration error: API Key missing' });
+    // This case should ideally not be reached if the key is hardcoded correctly
+    console.error('API Key is missing in the code.');
+    return res.status(500).json({ message: 'Server configuration error: API Key is missing in code' });
   }
 
   // --- Call the RAWG API ---
@@ -53,10 +52,9 @@ app.get('/api/games/search', async (req, res) => {
     // Make the request to RAWG using axios
     const response = await axios.get(rawgUrl, {
       params: {
-        key: apiKey,        // Your API key
+        key: apiKey,         // Using the hardcoded apiKey variable
         search: searchQuery, // The game name to search for
-        page_size: 10       // Limit results (optional, good practice)
-        // Add other params as needed based on RAWG docs (e.g., platforms, genres)
+        page_size: 10        // Limit results (optional, good practice)
       }
     });
 
@@ -67,7 +65,6 @@ app.get('/api/games/search', async (req, res) => {
   } catch (error) {
     // --- Error Handling ---
     console.error('Error fetching data from RAWG API:', error.message);
-    // Log more details if available (e.g., response from RAWG if the error has one)
     if (error.response) {
       console.error('RAWG Response Status:', error.response.status);
       console.error('RAWG Response Data:', error.response.data);

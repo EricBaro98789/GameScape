@@ -29,7 +29,8 @@
 
   <main>
     <div class="search-bar">
-      <input type="text" placeholder="Search for games..." />
+      <input type="text" id="gameSearchInput" placeholder="Search for games..." />
+      <button id="gameSearchButton">Search</button>
     </div>
 
     <div class="filters">
@@ -60,10 +61,10 @@
       </div>
     </div>
 
-    <p>Showing 8 results</p> 
+    <p>Showing 8 results</p>
 
 
-    <div class="game-grid">
+    <div class="game-grid" id="gameResultsGrid">
 
       <div class="game-card">
         <img src="eldenring.jpg" alt="Elden Ring" />
@@ -71,7 +72,7 @@
         <div class="platform-icons">🖥 🎮</div>
         <div class="rating">⭐ 9.8</div>
         <button>View Details</button>
-      </div>  
+      </div>
       <!-- Add other game cards here... -->
     </div>
 
@@ -105,6 +106,7 @@
       &copy; 2024 GameScape. All rights reserved.
     </div>
   </footer>
+  <script src="search.js"></script>
 </body>
 </html>
 
