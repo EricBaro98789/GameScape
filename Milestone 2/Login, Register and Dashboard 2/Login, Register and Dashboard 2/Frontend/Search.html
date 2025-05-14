@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameScape Search</title>
+  <link rel="stylesheet" href="assets/css/search-style.css" />
+</head>
+<body>
+    <video autoplay muted loop id="bg-video">
+        <source src="assets/videos/gta.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div>
+  <header>
+    <div class="logo">GameScape</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Reviews</a>
+      <a href="#">News</a>
+      <a href="#">Features</a>
+      <a href="#">About</a>
+    </nav>
+    <div class="icons">
+      <span>🔔</span>
+      <span>👤</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="search-bar">
+      <input type="text" id="gameSearchInput" placeholder="Search for games..." />
+      <button type="button" id="gameSearchButton">Search</button>
+    </div>
+
+    <div class="filters">
+      <div class="popular-tags">
+        <strong>Popular Searches:</strong>
+        <span>Elden Ring</span>
+        <span>Zelda</span>
+        <span>Baldur's Gate 3</span>
+        <span>Spider-Man 2</span>
+      </div>
+
+      <div class="platforms">
+        <strong>Platforms:</strong>
+        <label><input type="checkbox" /> PC</label>
+        <label><input type="checkbox" /> PS5</label>
+        <label><input type="checkbox" /> Xbox</label>
+        <label><input type="checkbox" /> Steam</label>
+        <label><input type="checkbox" /> Switch</label>
+      </div>
+
+      <div class="sort-by">
+        <label for="sort">Sort by:</label>
+        <select id="sort">
+          <option>Most Popular</option>
+          <option>Highest Rated</option>
+          <option>Newest</option>
+        </select>
+      </div>
+    </div>
+
+    <p>Showing 8 results</p>
+
+
+    <div class="game-grid" id="gameResultsGrid">
+
+      <div class="game-card">
+        <img src="eldenring.jpg" alt="Elden Ring" />
+        <h4>Elden Ring</h4>
+        <div class="platform-icons">🖥 🎮</div>
+        <div class="rating">⭐ 9.8</div>
+        <button type="button">View Details</button>
+      </div>
+      <!-- Add other game cards here... -->
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="footer-columns">
+      <div>
+        <h4>GameScape</h4>
+        <p>Your trusted source for game reviews and gaming content.</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <a href="#">About Us</a>
+        <a href="#">Contact</a>
+        <a href="#">Careers</a>
+        <a href="#">Advertise</a>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="#">Cookie Policy</a>
+      </div>
+      <div>
+        <h4>Follow Us</h4>
+        <div class="social-icons">🐦 📘 📸 🎥 🎮</div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2024 GameScape. All rights reserved.
+    </div>
+  </footer>
+  <script src="assets/js/search.js"></script>
+</body>
+</html>
+
