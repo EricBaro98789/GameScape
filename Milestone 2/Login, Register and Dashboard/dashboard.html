@@ -34,7 +34,7 @@
 
     async function searchGames() {
       const query = document.getElementById("searchBox").value;
-      const response = await fetch(`/api/games/search?query=${query}`);
+      const response = await fetch(`http://localhost:8080/api/games/search?query=${encodeURIComponent(query)}`);
       const data = await response.json();
 
       const results = document.getElementById("results");

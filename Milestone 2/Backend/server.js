@@ -6,9 +6,12 @@ require('dotenv').config(); // <<< Make sure this is at the very top
 // Import necessary libraries
 const express = require('express');
 const axios = require('axios'); // <<< Import axios
+const cors = require('cors');
 
 // Create an instance of an Express application
 const app = express();
+
+app.use(cors());
 
 // Define the port the server will run on
 const port = process.env.PORT || 3000;
