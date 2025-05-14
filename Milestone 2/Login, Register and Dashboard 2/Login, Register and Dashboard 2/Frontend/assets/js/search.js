@@ -5,12 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsGrid = document.getElementById('gameResultsGrid');
 
     // If you prefer to search on "Enter" key press IN ADDITION to a button, you can add:
-    // searchInput.addEventListener('keypress', function(event) {
-    //     if (event.key === 'Enter') {
-    //         event.preventDefault(); // Prevent form submission if it's in a form
-    //         performSearch();
-    //     }
-    // });
+    searchInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent form submission if it's in a form
+            performSearch();
+        }
+    });
 
     searchButton.addEventListener('click', performSearch);
 
