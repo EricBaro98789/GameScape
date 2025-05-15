@@ -1,42 +1,65 @@
 // search-app.js
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('gameSearchInput');
-    const searchButton = document.getElementById('gameSearchButton'); // Assuming you added this button
+    const searchButton = document.getElementById('gameSearchButton');
     const resultsGrid = document.getElementById('gameResultsGrid');
-
-    // +++ START: ADDITION 1 - Get or create a container for game details +++
     let gameDetailContainer = document.getElementById('gameDetailContainer');
+
     if (!gameDetailContainer) {
         gameDetailContainer = document.createElement('div');
         gameDetailContainer.id = 'gameDetailContainer';
-        gameDetailContainer.style.display = 'none'; // Initially hidden
-        // Insert it after the resultsGrid in the DOM, or choose another appropriate place
+        gameDetailContainer.style.display = 'none';
         resultsGrid.parentNode.insertBefore(gameDetailContainer, resultsGrid.nextSibling);
     }
-    // +++ END: ADDITION 1 +++
 
-    searchInput.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); // Prevent form submission if it's in a form
-            performSearch();
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // VVVVVV DEFINE THE displayGames FUNCTION HERE VVVVVV
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    function displayGames(gamesArray) {
+        resultsGrid.innerHTML = ''; // Clear previous results or "no games found" message
+
+        if (gamesArray && gamesArray.length > 0) {
+            gamesArray.forEach(game => {
+                const gameCard = document.createElement('div');
+                gameCard.className = 'game-card';
+
+                gameCard.innerHTML = `
+                    <img src="${game.background_image || 'assets/images/placeholder.jpg'}" alt="${game.name || 'Game image'}" />
+                    <h4>${game.name}</h4>
+                    <div class="platform-icons">🖥 🎮</div>
+                    <div class="rating">⭐ ${game.rating || 'N/A'}</div>
+                    <button class="view-details-btn" data-game-id="${game.id}">View Details</button>
+                `;
+                resultsGrid.appendChild(gameCard);
+            });
+        } else {
+            resultsGrid.innerHTML = '<p>No games to display.</p>';
         }
-    });
-
-    searchButton.addEventListener('click', performSearch);
+    }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // ^^^^^^ END OF displayGames FUNCTION DEFINITION ^^^^^^
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     async function performSearch() {
         const searchTerm = searchInput.value.trim();
 
         if (!searchTerm) {
-            resultsGrid.innerHTML = '<p>Please enter a game name to search.</p>';
+            resultsGrid.style.display = 'grid'; // Ensure grid is visible for message
+            gameDetailContainer.style.display = 'none';
+            displayGames([]); // Call with empty array to show "No games to display" or clear
+            resultsGrid.innerHTML = '<p>Please enter a game name to search.</p>'; // Or keep specific message
             return;
         }
 
-        resultsGrid.innerHTML = '<p>Loading results...</p>'; // Provide loading feedback
+        resultsGrid.innerHTML = '<p>Loading results...</p>';
+        resultsGrid.style.display = 'grid';
+        gameDetailContainer.style.display = 'none';
 
         try {
+            // Make sure YOUR_BACKEND_PORT is correctly set, e.g., 8080
             const apiUrl = `http://localhost:8080/api/games/search?query=${encodeURIComponent(searchTerm)}`;
 
+            // Corrected typo in your log: "Workspaceing" to "Fetching"
             console.log(`Workspaceing from: ${apiUrl}`);
             const response = await fetch(apiUrl);
 
@@ -48,29 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log('Data received:', data);
 
-            resultsGrid.innerHTML = ''; // Clear loading message
-
-            if (data.results && data.results.length > 0) {
-                data.results.forEach(game => {
-                    const gameCard = document.createElement('div');
-                    gameCard.className = 'game-card'; // Use the class from your HTML example
-
-                    // Match the structure of your example game card
-                    gameCard.innerHTML = `
-                        <img src="${game.background_image || 'placeholder.jpg'}" alt="${game.name}" />
-                        <h4>${game.name}</h4>
-                        <div class="platform-icons">🖥 🎮</div> <div class="rating">⭐ ${game.rating || 'N/A'}</div>
-                        <button class="view-details-btn" data-game-id="${game.id}">View Details</button>
-                    `;
-                    // Note: Added a class "view-details-btn" and "data-game-id" for potential future use.
-                    // The "View Details" button won't do anything yet.
-                    // Platform icons are static for now. You'd need to map game.platforms from RAWG.
-
-                    resultsGrid.appendChild(gameCard);
-                });
-            } else {
-                resultsGrid.innerHTML = '<p>No games found matching your search.</p>';
-            }
+            // NOW CALL THE SEPARATE displayGames FUNCTION
+            displayGames(data.results);
 
         } catch (error) {
             console.error('Error during search:', error);
@@ -78,28 +80,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-     // +++ START: ADDITION 2 - Event listener for clicks on dynamically added "View Details" buttons +++
+    // Event listener for "Enter" key press
+    searchInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            performSearch();
+        }
+    });
+
+    // Event listener for search button click
+    searchButton.addEventListener('click', performSearch);
+
+    // Event listener for "View Details" buttons
     resultsGrid.addEventListener('click', async (event) => {
-        // Check if the clicked element is a 'view-details-btn'
         if (event.target && event.target.classList.contains('view-details-btn')) {
-            const gameId = event.target.dataset.gameId; // Get game ID from data-game-id attribute
+            const gameId = event.target.dataset.gameId;
             if (gameId) {
                 console.log(`View Details clicked for game ID: ${gameId}`);
                 await fetchAndDisplayGameDetails(gameId);
             }
         }
     });
-    // +++ END: ADDITION 2 +++
 
-        // +++ START: ADDITION 3 - Function to fetch and display specific game details +++
+    // Function to fetch and display specific game details
     async function fetchAndDisplayGameDetails(gameId) {
-        resultsGrid.style.display = 'none'; // Hide the search results grid
+        resultsGrid.style.display = 'none';
         gameDetailContainer.innerHTML = '<p>Loading game details...</p>';
-        gameDetailContainer.style.display = 'block'; // Show the detail container
+        gameDetailContainer.style.display = 'block';
 
         try {
-            // !!! IMPORTANT: Replace YOUR_BACKEND_PORT with your actual backend port !!!
+            // Make sure YOUR_BACKEND_PORT is correctly set, e.g., 8080
             const apiUrl = `http://localhost:8080/api/games/${gameId}`;
+            // Corrected typo in your log: "Workspaceing" to "Fetching"
             console.log(`Workspaceing details from: ${apiUrl}`);
 
             const response = await fetch(apiUrl);
@@ -113,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameDetailContainer.innerHTML = `
                 <button id="backToSearchBtn" style="margin-bottom: 15px;">Back to Search Results</button>
                 <h2>${gameDetails.name}</h2>
-                <img src="${gameDetails.background_image || 'placeholder.jpg'}" alt="${gameDetails.name || 'Game image'}" style="max-width: 100%; max-height: 400px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;"/>
+                <img src="${gameDetails.background_image || 'assets/images/placeholder.jpg'}" alt="${gameDetails.name || 'Game image'}" style="max-width: 100%; max-height: 400px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;"/>
                 <p><strong>Rating:</strong> ${gameDetails.rating || 'N/A'} (Metacritic: ${gameDetails.metacritic || 'N/A'})</p>
                 <p><strong>Released:</strong> ${gameDetails.released || 'N/A'}</p>
                 <div><strong>Description:</strong> ${gameDetails.description_raw || gameDetails.description || 'No description available.'}</div>
@@ -128,11 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (backButton) {
                 backButton.addEventListener('click', () => {
                     gameDetailContainer.style.display = 'none';
-                    resultsGrid.style.display = 'grid'; // Or whatever its original display was, 'grid' if using the CSS from before
+                    resultsGrid.style.display = 'grid';
                     gameDetailContainer.innerHTML = '';
                 });
             }
-
         } catch (error) {
             console.error('Error fetching game details:', error);
             gameDetailContainer.innerHTML = `<p>Failed to load game details: ${error.message}. Please check the console.</p>
@@ -147,6 +158,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    // +++ END: ADDITION 3 +++
 
+    // Function to load a specific game or a predefined set on page load
+    async function loadInitialGames() {
+        const initialGameSearchTerm = "grand theft auto 6"; // Or any game you want to feature
+        resultsGrid.innerHTML = `<p>Loading featured game: ${initialGameSearchTerm}...</p>`;
+        resultsGrid.style.display = 'grid';
+        gameDetailContainer.style.display = 'none';
+
+        try {
+            // Make sure YOUR_BACKEND_PORT is correctly set, e.g., 8080
+            const apiUrl = `http://localhost:8080/api/games/search?query=${encodeURIComponent(initialGameSearchTerm)}&page_size=5`;
+
+            console.log(`Workspaceing initial game from: ${apiUrl}`); // Corrected "Workspaceing"
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response from server.' }));
+                throw new Error(`Server error for initial game: ${response.status} - ${errorData.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('Initial game data received:', data);
+
+            if (data.results && data.results.length > 0) {
+                // VVVVVV CORRECTED LINE VVVVVV
+                displayGames(data.results);
+                // ^^^^^^ CORRECTED LINE ^^^^^^
+            } else {
+                resultsGrid.innerHTML = `<p>Could not load featured game: ${initialGameSearchTerm}.</p>`;
+            }
+        } catch (error) {
+            console.error('Error loading initial game:', error);
+            resultsGrid.innerHTML = `<p>An error occurred loading the initial game: ${error.message}.</p>`;
+        }
+    }
+
+    // CALL loadInitialGames when the page loads
+    loadInitialGames();
 });
