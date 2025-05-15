@@ -18,9 +18,25 @@
             <h2>Welcome back to GameScape</h2>
             <p class="subtext">Sign in to GameScape</p>
 
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button type="button" onclick="login()">Login</button>
+            <form id="loginForm">
+                <div id="loginErrorMessages" class="error-messages" style="display:none;"></div>
+
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="e.g., user@example.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit">Login</button>
+            </form>
+
+            <div class="extra-links">
+                <a href="forgot-password.html">Forgot password?</a>
+            </div>
 
             <div class="footer-text">
                 Don't have an account? <a href="register.html">Register here</a>
@@ -28,6 +44,51 @@
         </div>
     </div>
 
-</body>
+    <script>
+        // Example: Basic structure for your login.js or inline script
+        const loginForm = document.getElementById('loginForm');
+        const loginErrorMessages = document.getElementById('loginErrorMessages');
 
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Call your actual login logic here
+            login(email, password);
+        });
+
+        // Your existing login function would be defined here or in an external JS file
+        // It should handle the login logic and display errors in 'loginErrorMessages'
+        function login(email, password) {
+            console.log("Attempting login with:", email);
+            let login_is_successful = false;
+            // TODO: Implement actual login logic (e.g., API call)
+            // Example:
+
+            iif (email === "user@example.com" && password === "password123") {
+                login_is_successful = true; // Simulate a successful login
+            } else {
+                login_is_successful = false; // Simulate a failed login
+            }
+            // --- End of Placeholder Logic ---
+
+
+            // Now use the result:
+            if (login_is_successful) {
+                console.log("Login successful, redirecting...");
+                window.location.href = 'Search.html'; // Redirect to Search.html
+            } else {
+                console.log("Login failed, displaying error.");
+                if (loginErrorMessages) { // Check if the element exists
+                    loginErrorMessages.textContent = 'Invalid email or password.';
+                    loginErrorMessages.style.display = 'block';
+                } else {
+                    console.error("loginErrorMessages element not found in the DOM.");
+                }
+            }
+        }
+    </script>
+</body>
 </html>
