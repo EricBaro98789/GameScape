@@ -3,8 +3,130 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GameScape Login</title>
-    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/login.css"> <style>
+        /* Basic styles if login.css is not fully implemented yet */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            color: #fff; /* Assuming dark background video */
+            overflow: hidden; /* Hide scrollbars if video is fullscreen */
+        }
+
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+        }
+
+        #app {
+            position: relative; /* To ensure content is above video overlay */
+            z-index: 1;
+        }
+
+        .login-card {
+            background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent background */
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 350px;
+        }
+
+        .login-card .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .login-card h2 {
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .login-card .subtext {
+            margin-bottom: 25px;
+            color: #ccc;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #ddd;
+        }
+
+        .input-group input {
+            width: calc(100% - 20px); /* Account for padding */
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .login-card button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914; /* Netflix-like red */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-card button[type="submit"]:hover {
+            background-color: #f40612;
+        }
+
+        .extra-links {
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .extra-links a {
+            color: #aaa;
+            text-decoration: none;
+        }
+
+        .extra-links a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        .footer-text a {
+            color: #fff;
+            font-weight: bold;
+        }
+        .error-messages {
+            background-color: rgba(255, 0, 0, 0.1);
+            color: #ffcccc;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #990000;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 
 <body>
@@ -35,58 +157,84 @@
             </form>
 
             <div class="extra-links">
-                <a href="forgot-password.html">Forgot password?</a>
+                <a href="#">Forgot password?</a>
             </div>
 
             <div class="footer-text">
                 Don't have an account? <a href="register.html">Register here</a>
             </div>
+             <p style="margin-top: 15px;"><a href="search-page.html" style="color: #ccc; text-decoration:none;">&larr; Back to Search Page</a></p>
         </div>
     </div>
 
     <script>
-        // Example: Basic structure for your login.js or inline script
         const loginForm = document.getElementById('loginForm');
         const loginErrorMessages = document.getElementById('loginErrorMessages');
 
         loginForm.addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent default form submission
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
 
-            // Call your actual login logic here
-            login(email, password);
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            // Basic client-side validation (optional, good practice)
+            if (!email || !password) {
+                loginErrorMessages.textContent = 'Please enter both email and password.';
+                loginErrorMessages.style.display = 'block';
+                return;
+            }
+
+            // Call your actual login logic
+            loginUser(email, password); // Changed function name to be more descriptive
         });
 
-        // Your existing login function would be defined here or in an external JS file
-        // It should handle the login logic and display errors in 'loginErrorMessages'
-        function login(email, password) {
-            console.log("Attempting login with:", email);
-            let login_is_successful = false;
-            // TODO: Implement actual login logic (e.g., API call)
-            // Example:
+        async function loginUser(email, password) {
+            console.log("Attempting login with:", email, "Password: (hidden for security)");
+            loginErrorMessages.style.display = 'none'; // Hide previous errors
+            loginErrorMessages.textContent = '';
 
-            if (email === "user@example.com" && password === "password123") {
-                login_is_successful = true; // Simulate a successful login
-            } else {
-                login_is_successful = false; // Simulate a failed login
-            }
-            // --- End of Placeholder Logic ---
+            const data = { email, password };
 
+            try {
+                // !!! IMPORTANT: Replace YOUR_BACKEND_PORT with your actual backend port (e.g., 8080 or 3000) !!!
+                const apiUrl = `http://localhost:8080/login`;
 
-            // Now use the result:
-            if (login_is_successful) {
-                console.log("Login successful, redirecting...");
-                window.location.href = 'Search.html'; // Redirect to Search.html
-            } else {
-                console.log("Login failed, displaying error.");
-                if (loginErrorMessages) { // Check if the element exists
-                    loginErrorMessages.textContent = 'Invalid email or password.';
-                    loginErrorMessages.style.display = 'block';
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json(); // Always try to parse JSON
+
+                if (response.ok) { // Checks if status is 200-299
+                    console.log("Login successful response from server:", result);
+                    // alert("Login successful! Welcome, " + (result.username || 'user') + "!"); // Optional: alert can be annoying
+
+                    if (result.token) {
+                        localStorage.setItem("token", result.token);
+                        localStorage.setItem("username", result.username || 'user'); // Optionally store username
+
+                        // Redirect to a dashboard or main application page
+                        window.location.href = 'search.html'; // Or your main game display page
+                    } else {
+                        loginErrorMessages.textContent = 'Login successful, but no token received from server.';
+                        loginErrorMessages.style.display = 'block';
+                    }
                 } else {
-                    console.error("loginErrorMessages element not found in the DOM.");
+                    // Handle errors from the server (e.g., 400, 401, 403, 500 from your backend)
+                    console.log("Login failed response from server:", result);
+                    loginErrorMessages.textContent = result.error || 'Login failed. Please try again.';
+                    loginErrorMessages.style.display = 'block';
                 }
+            } catch (error) {
+                // Handle network errors or other issues with the fetch itself
+                console.error("Network or other error during login:", error);
+                loginErrorMessages.textContent = 'An error occurred. Please check your connection and try again.';
+                loginErrorMessages.style.display = 'block';
             }
         }
     </script>
