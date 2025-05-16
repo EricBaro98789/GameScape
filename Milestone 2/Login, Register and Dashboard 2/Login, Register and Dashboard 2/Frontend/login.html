@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GameScape Login</title>
-    <link rel="stylesheet" href="assets/css/login.css"> 
+    <link rel="stylesheet" href="assets/css/login.css">
 </head>
 
 <body>
@@ -78,7 +78,7 @@
             const data = { email, password };
 
             try {
-                // !!! IMPORTANT: Replace YOUR_BACKEND_PORT with your actual backend port (e.g., 8080 or 3000) !!!
+                // !!! IMPORTANT: Replace 8080 with your actual backend port (e.g., 8080 or 3000) !!!
                 const apiUrl = `http://localhost:8080/login`;
 
                 const response = await fetch(apiUrl, {

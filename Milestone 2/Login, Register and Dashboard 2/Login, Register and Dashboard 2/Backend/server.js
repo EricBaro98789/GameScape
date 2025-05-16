@@ -21,11 +21,7 @@ const users = {}; // Format: users['user@example.com'] = { username: 'name', pas
 const collections = {}; // Format: collections['user@example.com'] = [{gameId: ..., gameTitle: ..., gameImage: ...}, ...]
 
 // --- IMPORTANT: JWT Secret Key ---
-// This key is used to sign and verify your login tokens.
-// It should be a long, random, and secret string.
-// **DO NOT use a weak key or your RAWG API key here.**
-// For now, we'll hardcode it. For any real application or if sharing code,
-// this ABSOLUTELY MUST be moved to an environment variable (e.g., in a .env file).
+
 const JWT_SECRET = 'Eric123';
 // ^^^^^^^^^^^^^^^ REPLACE THE ABOVE WITH YOUR OWN UNIQUE, STRONG SECRET!
 
@@ -68,7 +64,7 @@ app.get('/api/games/search', async (req, res) => {
 // --- Route for fetching details of a single game ---
 app.get('/api/games/:id', async (req, res) => {
   const gameId = req.params.id;
-  const apiKey = '49019cbf03744419a483362b07d2f0a1'; // <<< CORRECTED: Using your actual hardcoded RAWG API Key
+  const apiKey = '49019cbf03744419a483362b07d2f0a1';
 
   if (!apiKey) {
     console.error('RAWG API Key is missing in code for game details.');
@@ -80,7 +76,7 @@ app.get('/api/games/:id', async (req, res) => {
 
   const rawgDetailUrl = `https://api.rawg.io/api/games/${gameId}`;
   try {
-    console.log(`Workspaceing details for game ID: ${gameId} from RAWG...`); // Corrected "Workspaceing"
+    console.log(`Workspaceing details for game ID: ${gameId} from RAWG...`);
     const response = await axios.get(rawgDetailUrl, {
       params: { key: apiKey }
     });
@@ -97,7 +93,7 @@ app.get('/api/games/:id', async (req, res) => {
 });
 
 // --- User Registration Route ---
-app.post('/register', async (req, res) => { // No need for express.json() here if app.use(express.json()) is global
+app.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -121,7 +117,7 @@ app.post('/register', async (req, res) => { // No need for express.json() here i
 });
 
 // --- User Login Route ---
-app.post('/login', async (req, res) => { // No need for express.json() here if app.use(express.json()) is global
+app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -152,60 +148,88 @@ app.post('/login', async (req, res) => { // No need for express.json() here if a
   }
 });
 
-// --- Add Game to Collection Route ---
-app.post('/collection', (req, res) => { // No need for express.json() here if app.use(express.json()) is global
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization token is required' });
-  }
-  const token = authHeader.split(' ')[1];
+// +++ IMPLEMENTING /collection Endpoints +++
 
-  try {
-    const decodedToken = jwt.verify(token, JWT_SECRET); // Verify token using your defined JWT_SECRET
-    const userEmail = decodedToken.email;
+// --- Add Game to User's Collection (POST) ---
+app.post('/collection', (req, res) => {
+    const authHeader = req.headers.authorization;
 
-    if (!collections[userEmail]) {
-      collections[userEmail] = [];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
     }
-    // req.body should contain { gameId, gameTitle, gameImage } from the frontend
-    const gameToAdd = req.body;
-    if (!gameToAdd || !gameToAdd.gameId || !gameToAdd.gameTitle) {
-        return res.status(400).json({ error: 'Game data (gameId, gameTitle) is required'});
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decodedToken = jwt.verify(token, JWT_SECRET); // Verify using your actual JWT_SECRET
+        const userEmail = decodedToken.email;
+
+        if (!userEmail) {
+            // This case should ideally be caught by jwt.verify if email is not in payload
+            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing email)' });
+        }
+
+        const gameData = req.body;
+        // Basic validation for incoming game data (expected from your frontend addToCollection)
+        if (!gameData || typeof gameData.gameId === 'undefined' || !gameData.gameTitle) { // gameId can be 0
+            return res.status(400).json({ error: 'Bad Request: gameId and gameTitle are required in the request body' });
+        }
+
+        if (!collections[userEmail]) {
+            collections[userEmail] = []; // Initialize collection for the user if it doesn't exist
+        }
+
+        // Optional: Check if the game (by gameId) already exists in this user's collection
+        const gameExists = collections[userEmail].find(game => game.gameId === gameData.gameId);
+        if (gameExists) {
+            console.log(`Game ID ${gameData.gameId} already in ${userEmail}'s collection.`);
+            return res.status(200).json({ message: 'Game is already in your collection', collection: collections[userEmail] });
+        }
+
+        collections[userEmail].push(gameData);
+        console.log(`Game added to ${userEmail}'s collection. Current collection size: ${collections[userEmail].length}`);
+        // For debugging, you can log the whole collection: console.log(collections[userEmail]);
+        res.status(201).json({ message: 'Game added to your collection!', collection: collections[userEmail] });
+
+    } catch (error) {
+        console.error('Error in POST /collection:', error.message);
+        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+            return res.status(403).json({ error: 'Forbidden: Invalid or expired token. Please log in again.' });
+        }
+        res.status(500).json({ error: 'Server error while adding game to collection' });
     }
-
-    collections[userEmail].push(gameToAdd);
-    console.log(`Game added to ${userEmail}'s collection:`, gameToAdd); // For debugging
-    console.log(`Current collection for ${userEmail}:`, collections[userEmail]); // For debugging
-    res.status(201).json({ message: 'Game added to your collection!' });
-
-  } catch (error) {
-    console.error('Error adding to collection / Invalid token:', error.message);
-    res.status(403).json({ error: 'Invalid or expired token. Please log in again.' });
-  }
 });
 
-// --- Get User's Collection Route ---
+// --- Get User's Collection (GET) ---
 app.get('/collection', (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization token is required' });
-  }
-  const token = authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
 
-  try {
-    const decodedToken = jwt.verify(token, JWT_SECRET); // Verify token
-    const userEmail = decodedToken.email;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
+    }
+    const token = authHeader.split(' ')[1];
 
-    console.log(`Workspaceing collection for: ${userEmail}`); // For debugging
-    const userCollection = collections[userEmail] || [];
-    console.log(`Returning collection:`, userCollection); // For debugging
-    res.json(userCollection);
+    try {
+        const decodedToken = jwt.verify(token, JWT_SECRET); // Verify using your actual JWT_SECRET
+        const userEmail = decodedToken.email;
 
-  } catch (error) {
-    console.error('Error fetching collection / Invalid token:', error.message);
-    res.status(403).json({ error: 'Unauthorized access or invalid token. Please log in again.' });
-  }
+        if (!userEmail) {
+            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing email)' });
+        }
+
+        const userCollection = collections[userEmail] || []; 
+        console.log(`Workspaceing collection for ${userEmail}. Found ${userCollection.length} items.`);
+        res.status(200).json(userCollection);
+
+    } catch (error) {
+        console.error('Error in GET /collection:', error.message);
+        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+            return res.status(403).json({ error: 'Forbidden: Invalid or expired token. Please log in again.' });
+        }
+        res.status(500).json({ error: 'Server error while fetching collection' });
+    }
 });
+
+// +++ END OF /collection Endpoints +++
 
 // Start the server
 app.listen(port, () => {
