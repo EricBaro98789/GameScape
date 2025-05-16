@@ -1,124 +1,47 @@
+// Frontend/assets/js/search.js
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('gameSearchInput');
     const searchButton = document.getElementById('gameSearchButton');
     const resultsGrid = document.getElementById('gameResultsGrid');
     let gameDetailContainer = document.getElementById('gameDetailContainer');
+    let myCollectionContainer = document.getElementById('myCollectionContainer');
+    const loadCollectionButton = document.getElementById('loadCollectionBtn');
 
-    // --- Get/Create containers for details and collection ---
+    // Dynamically create containers if they don't exist in HTML
     if (!gameDetailContainer) {
         gameDetailContainer = document.createElement('div');
         gameDetailContainer.id = 'gameDetailContainer';
         gameDetailContainer.style.display = 'none';
         resultsGrid.parentNode.insertBefore(gameDetailContainer, resultsGrid.nextSibling);
     }
-
-    // +++ NEW: Get/Create container for My Collection +++
-    let myCollectionContainer = document.getElementById('myCollectionContainer');
     if (!myCollectionContainer) {
         myCollectionContainer = document.createElement('div');
         myCollectionContainer.id = 'myCollectionContainer';
+        myCollectionContainer.className = 'game-grid'; // Apply same styling as results
         myCollectionContainer.style.display = 'none';
-        // Assuming you want it after gameDetailContainer or resultsGrid
         (gameDetailContainer.nextSibling ?
             gameDetailContainer.parentNode.insertBefore(myCollectionContainer, gameDetailContainer.nextSibling) :
             resultsGrid.parentNode.insertBefore(myCollectionContainer, resultsGrid.nextSibling)
         );
     }
 
-    // +++ NEW: Get reference to Load Collection button (assuming you add it to HTML) +++
-    const loadCollectionButton = document.getElementById('loadCollectionBtn');
+    // --- Event Listeners ---
+    if (searchButton) {
+        searchButton.addEventListener('click', performSearch);
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                performSearch();
+            }
+        });
+    }
     if (loadCollectionButton) {
         loadCollectionButton.addEventListener('click', loadAndDisplayUserCollection);
     }
-    // --- End of New Element References ---
 
-    function displayGames(gamesArray, isUserCollection = false) { // Added isUserCollection flag
-        resultsGrid.innerHTML = '';
-        myCollectionContainer.innerHTML = ''; // Clear collection too if displaying search results
-
-        const containerToUse = isUserCollection ? myCollectionContainer : resultsGrid;
-        containerToUse.innerHTML = ''; // Clear the specific container
-
-        if (gamesArray && gamesArray.length > 0) {
-            gamesArray.forEach(game => {
-                const gameCard = document.createElement('div');
-                gameCard.className = 'game-card';
-
-                // For "Add to Collection", we need game.id, game.name, game.background_image
-                // For displaying collection, backend sends gameId, gameTitle, gameImage
-                const gameId = game.id || game.gameId;
-                const gameName = game.name || game.gameTitle;
-                const gameImage = game.background_image || game.gameImage || 'assets/images/placeholder.jpg';
-
-                let buttonsHtml = `<button class="view-details-btn" data-game-id="${gameId}">View Details</button>`;
-                if (!isUserCollection) { // Only show "Add to Collection" for search results
-                    buttonsHtml += ` <button class="add-to-collection-btn"
-                                            data-game-id="${gameId}"
-                                            data-game-title="${encodeURIComponent(gameName)}"
-                                            data-game-image="${encodeURIComponent(gameImage)}">Add to Collection</button>`;
-                } else {
-                     buttonsHtml += ` <button class="remove-from-collection-btn" data-game-id="${gameId}">Remove</button>`; // Placeholder for remove
-                }
-
-
-                gameCard.innerHTML = `
-                    <img src="${gameImage}" alt="${gameName}" />
-                    <h4>${gameName}</h4>
-                    <div class="platform-icons">🖥 🎮</div>
-                    <div class="rating">⭐ ${game.rating || 'N/A'}</div>
-                    ${buttonsHtml}
-                `;
-                containerToUse.appendChild(gameCard);
-            });
-        } else {
-            if (isUserCollection) {
-                containerToUse.innerHTML = '<p>Your collection is empty. Add some games!</p>';
-            } else {
-                containerToUse.innerHTML = '<p>No games to display.</p>';
-            }
-        }
-        // Ensure correct container visibility
-        resultsGrid.style.display = isUserCollection ? 'none' : 'grid';
-        myCollectionContainer.style.display = isUserCollection ? 'grid' : 'none'; // Assuming collection also uses grid
-        gameDetailContainer.style.display = 'none';
-    }
-
-    async function performSearch() {
-        // ... (your existing performSearch function)
-        // Ensure it calls displayGames(data.results, false);
-        const searchTerm = searchInput.value.trim();
-        if (!searchTerm) { /* ... */ displayGames([], false); resultsGrid.innerHTML = '<p>Please enter a game name to search.</p>'; return; }
-        resultsGrid.innerHTML = '<p>Searching...</p>';
-        // ... (rest of try-catch)
-        // In the try block, on success:
-        // displayGames(data.results, false);
-        // (Make sure your performSearch correctly calls displayGames with the false flag)
-        // For brevity, I'm not pasting the whole performSearch, just ensure the call is:
-        // displayGames(data.results, false); in the success part.
-        // And also ensure views are managed:
-        resultsGrid.style.display = 'grid';
-        gameDetailContainer.style.display = 'none';
-        myCollectionContainer.style.display = 'none';
-        // ... (actual fetch and displayGames call as you have it)
-        try {
-            const apiUrl = `http://localhost:8080/api/games/search?query=${encodeURIComponent(searchTerm)}`;
-            console.log(`Workspaceing from: ${apiUrl}`);
-            const response = await fetch(apiUrl);
-            if (!response.ok) { /* ... error handling ... */ throw new Error('Failed search'); }
-            const data = await response.json();
-            displayGames(data.results, false);
-        } catch (error) {
-            console.error('Error during search:', error);
-            resultsGrid.innerHTML = `<p>An error occurred: ${error.message}.</p>`;
-        }
-    }
-
-    // Event listeners for search
-    searchInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') performSearch(); });
-    searchButton.addEventListener('click', performSearch);
-
-    // Event Listener for "View Details" and "Add to Collection" using Event Delegation
-    // Modified to handle both types of buttons within game cards
+    // Event delegation for dynamically created buttons in search results
     resultsGrid.addEventListener('click', async (event) => {
         const target = event.target;
         if (target && target.classList.contains('view-details-btn')) {
@@ -128,52 +51,165 @@ document.addEventListener('DOMContentLoaded', () => {
             const gameId = target.dataset.gameId;
             const gameTitle = decodeURIComponent(target.dataset.gameTitle);
             const gameImage = decodeURIComponent(target.dataset.gameImage);
-            if (gameId && gameTitle && gameImage) {
-                await addToUserCollection({ gameId: parseInt(gameId), gameTitle, gameImage }, target);
+            const gameRating = target.dataset.gameRating; // Get rating
+
+            if (gameId && gameTitle) {
+                await addToUserCollection({
+                    gameId: parseInt(gameId),
+                    gameTitle,
+                    gameImage: gameImage || null,
+                    rating: gameRating ? parseFloat(gameRating) : null // Pass rating
+                }, target);
             }
         }
     });
 
-    // If you add remove buttons to the collection view:
-    if (myCollectionContainer) {
-        myCollectionContainer.addEventListener('click', async (event) => {
-            const target = event.target;
-            if (target && target.classList.contains('view-details-btn')) { // Re-use view details
-                const gameId = target.dataset.gameId;
-                if (gameId) await fetchAndDisplayGameDetails(gameId);
-            } else if (target && target.classList.contains('remove-from-collection-btn')) {
-                // const gameId = target.dataset.gameId;
-                // await removeFromUserCollection(gameId); // You'd need to implement this
-                alert('Remove from collection - functionality to be added!');
+    // Event delegation for dynamically created buttons in collection view
+    myCollectionContainer.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (target && target.classList.contains('view-details-btn')) {
+            const gameId = target.dataset.gameId; // This should be rawgGameId
+            if (gameId) await fetchAndDisplayGameDetails(gameId);
+        } else if (target && target.classList.contains('remove-from-collection-btn')) {
+            const gameId = target.dataset.gameId; // This should be rawgGameId
+            if (gameId) {
+                await removeFromUserCollection(gameId);
             }
-        });
+        }
+    });
+
+    // --- Core Functions ---
+
+    function displayGames(gamesArray, isUserCollection = false) {
+        const containerToUse = isUserCollection ? myCollectionContainer : resultsGrid;
+        containerToUse.innerHTML = ''; // Clear the specific container
+
+        // Manage visibility of main content areas
+        if (isUserCollection) {
+            resultsGrid.style.display = 'none';
+            gameDetailContainer.style.display = 'none';
+            containerToUse.style.display = 'grid'; // Or 'block'
+        } else { // Displaying search results (or initial load)
+            myCollectionContainer.style.display = 'none';
+            gameDetailContainer.style.display = 'none';
+            containerToUse.style.display = 'grid'; // Or 'block'
+        }
+
+        if (gamesArray && gamesArray.length > 0) {
+            gamesArray.forEach(game => {
+                const gameCard = document.createElement('div');
+                gameCard.className = 'game-card';
+
+                let gameIdForButton, gameNameToDisplay, gameImageToDisplay, ratingValue;
+
+                if (isUserCollection) {
+                    // Data from your backend's /collection GET route (CollectedGame model)
+                    gameIdForButton = game.rawgGameId;
+                    gameNameToDisplay = game.gameTitle;
+                    gameImageToDisplay = game.gameImage || 'assets/images/placeholder.jpg';
+                    ratingValue = game.rating; // Rating is now stored in the collection
+                    console.log('Displaying COLLECTED game card:', { title: gameNameToDisplay, rawgIdForButton: gameIdForButton, rating: ratingValue });
+                } else {
+                    // Data from RAWG search API
+                    gameIdForButton = game.id;
+                    gameNameToDisplay = game.name;
+                    gameImageToDisplay = game.background_image || 'assets/images/placeholder.jpg';
+                    ratingValue = game.rating; // Rating from RAWG
+                }
+
+                let buttonsHtml = `<button class="view-details-btn" data-game-id="${gameIdForButton}">View Details</button>`;
+                if (!isUserCollection) {
+                    buttonsHtml += ` <button class="add-to-collection-btn"
+                                            data-game-id="${gameIdForButton}"
+                                            data-game-title="${encodeURIComponent(gameNameToDisplay)}"
+                                            data-game-image="${encodeURIComponent(gameImageToDisplay)}"
+                                            data-game-rating="${ratingValue || ''}">Add to Collection</button>`;
+                } else {
+                    buttonsHtml += ` <button class="remove-from-collection-btn" data-game-id="${gameIdForButton}">Remove</button>`;
+                }
+
+                const ratingToShow = (typeof ratingValue === 'number') ? ratingValue.toFixed(1) : 'N/A';
+
+
+                gameCard.innerHTML = `
+                    <img src="${gameImageToDisplay}" alt="${gameNameToDisplay}" />
+                    <h4>${gameNameToDisplay}</h4>
+                    <div class="platform-icons">🖥 🎮</div> <div class="rating">⭐ ${ratingToShow}</div>
+                    ${buttonsHtml}
+                `;
+                containerToUse.appendChild(gameCard);
+            });
+        } else {
+            containerToUse.innerHTML = isUserCollection ?
+                '<p>Your collection is empty. Search for games to add them!</p>' :
+                '<p>No games found for this search.</p>';
+        }
     }
 
+    async function performSearchActual(searchTerm, isInitialLoad = false) {
+        if (!isInitialLoad) {
+            resultsGrid.style.display = 'grid';
+            gameDetailContainer.style.display = 'none';
+            myCollectionContainer.style.display = 'none';
+        } else {
+             resultsGrid.style.display = 'grid';
+             gameDetailContainer.style.display = 'none';
+             myCollectionContainer.style.display = 'none';
+        }
+
+        try {
+            const pageSize = isInitialLoad ? 5 : 10;
+            // !!! REPLACE 8080 with your actual backend port if different !!!
+            const apiUrl = `http://localhost:8080/api/games/search?query=${encodeURIComponent(searchTerm)}&page_size=${pageSize}`;
+            console.log(`Fetching from: ${apiUrl}`);
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
+                throw new Error(`Server error: ${response.status} - ${errorData.message || response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('Data received for search/initial:', data);
+            displayGames(data.results, false);
+        } catch (error) {
+            console.error(`Error during ${isInitialLoad ? 'initial load' : 'search'}:`, error);
+            resultsGrid.innerHTML = `<p>An error occurred: ${error.message}.</p>`;
+        }
+    }
+
+    async function performSearch() {
+        const searchTerm = searchInput.value.trim();
+        if (!searchTerm) {
+            resultsGrid.style.display = 'grid';
+            gameDetailContainer.style.display = 'none';
+            myCollectionContainer.style.display = 'none';
+            displayGames([], false); // Clear results and show "No games to display"
+            resultsGrid.innerHTML = '<p>Please enter a game name to search.</p>';
+            return;
+        }
+        resultsGrid.innerHTML = '<p>Searching for results...</p>';
+        await performSearchActual(searchTerm, false);
+    }
 
     async function fetchAndDisplayGameDetails(gameId) {
-        // ... (your existing fetchAndDisplayGameDetails function)
-        // Ensure it manages visibility:
         resultsGrid.style.display = 'none';
         myCollectionContainer.style.display = 'none';
+        gameDetailContainer.innerHTML = '<p>Loading game details...</p>';
         gameDetailContainer.style.display = 'block';
-        // ... (rest of the function, including the back button logic)
-        // Make sure back button shows resultsGrid and hides others.
-        // E.g., backButton.addEventListener('click', () => {
-        //    gameDetailContainer.style.display = 'none';
-        //    resultsGrid.style.display = 'grid';
-        //    myCollectionContainer.style.display = 'none';
-        //    gameDetailContainer.innerHTML = '';
-        // });
-        // For brevity, I'm not pasting the whole function, just ensure view management.
-        // The version you had before for fetchAndDisplayGameDetails was good.
+
         try {
+            // !!! REPLACE 8080 with your actual backend port if different !!!
             const apiUrl = `http://localhost:8080/api/games/${gameId}`;
-            // ... (rest of fetch and display logic as you had)
+            console.log(`Fetching details from: ${apiUrl}`);
             const response = await fetch(apiUrl);
-            if(!response.ok) throw new Error("Failed to fetch details");
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to parse error from server.' }));
+                throw new Error(`Server error: ${response.status} - ${errorData.message || response.statusText}`);
+            }
             const gameDetails = await response.json();
-             gameDetailContainer.innerHTML = `
-                <button id="backToSearchBtnFromDetails" style="margin-bottom: 15px;">Back to Results</button>
+            console.log('Game details received:', gameDetails);
+
+            gameDetailContainer.innerHTML = `
+                <button id="backToMainViewBtn" style="margin-bottom: 15px;">Back to Results</button>
                 <h2>${gameDetails.name}</h2>
                 <img src="${gameDetails.background_image || 'assets/images/placeholder.jpg'}" alt="${gameDetails.name || 'Game image'}" style="max-width: 100%; max-height: 400px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;"/>
                 <p><strong>Rating:</strong> ${gameDetails.rating || 'N/A'} (Metacritic: ${gameDetails.metacritic || 'N/A'})</p>
@@ -185,37 +221,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Publishers:</strong> ${gameDetails.publishers ? gameDetails.publishers.map(p => p.name).join(', ') : 'N/A'}</p>
                 ${gameDetails.website ? `<p><a href="${gameDetails.website}" target="_blank" rel="noopener noreferrer">Visit Website</a></p>` : ''}
             `;
-            document.getElementById('backToSearchBtnFromDetails').addEventListener('click', () => {
+            document.getElementById('backToMainViewBtn').addEventListener('click', () => {
                 gameDetailContainer.style.display = 'none';
-                resultsGrid.style.display = 'grid'; // Or 'block' or how it was
-                // myCollectionContainer should already be none
+                // Check localStorage or a variable to see if user was viewing collection or search
+                // For simplicity, always go back to search results view for now
+                resultsGrid.style.display = 'grid';
+                myCollectionContainer.style.display = 'none'; // Ensure collection is hidden
             });
-
-        } catch (error) { /* ... error handling ... */ }
+        } catch (error) {
+            console.error('Error fetching game details:', error);
+            gameDetailContainer.innerHTML = `<p>Failed to load game details: ${error.message}.</p>
+                                           <button id="backToMainViewOnErrorBtn">Back to Results</button>`;
+            document.getElementById('backToMainViewOnErrorBtn')?.addEventListener('click', () => {
+                gameDetailContainer.style.display = 'none';
+                resultsGrid.style.display = 'grid';
+            });
+        }
     }
 
-    // +++ NEW: Function to Add a Game to User's Collection +++
     async function addToUserCollection(gameData, buttonElement) {
         const token = localStorage.getItem("token");
         if (!token) {
             alert("Please log in to add games to your collection.");
-            // Optionally redirect to login: window.location.href = 'login.html';
             return;
         }
-
-        console.log("Adding to collection:", gameData);
-
+        console.log("Adding to collection with data:", gameData); // Will include rating
         try {
-            // !!! IMPORTANT: Replace 8080 !!!
+            // !!! REPLACE 8080 with your actual backend port if different !!!
             const response = await fetch(`http://localhost:8080/collection`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(gameData) // Send { gameId, gameTitle, gameImage }
+                body: JSON.stringify(gameData)
             });
-
             const result = await response.json();
             if (response.ok) {
                 alert(result.message || "Game added to collection!");
@@ -232,95 +272,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // +++ NEW: Function to Load and Display User's Collection +++
     async function loadAndDisplayUserCollection() {
         const token = localStorage.getItem("token");
         if (!token) {
             alert("Please log in to view your collection.");
-            // Optionally redirect to login: window.location.href = 'login.html';
             return;
         }
-
-        resultsGrid.style.display = 'none'; // Hide search results
-        gameDetailContainer.style.display = 'none'; // Hide game details
+        resultsGrid.style.display = 'none';
+        gameDetailContainer.style.display = 'none';
         myCollectionContainer.innerHTML = '<p>Loading your collection...</p>';
-        myCollectionContainer.style.display = 'grid'; // Or 'block', assuming it will also be a grid
+        myCollectionContainer.style.display = 'grid';
 
         try {
-            // !!! IMPORTANT: Replace 8080 !!!
+            // !!! REPLACE 8080 with your actual backend port if different !!!
             const response = await fetch(`http://localhost:8080/collection`, {
                 method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
+                headers: { "Authorization": `Bearer ${token}` }
             });
-
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Failed to parse error from server.'}));
+                const errorData = await response.json().catch(() => ({ message: 'Failed to parse error from server.' }));
                 throw new Error(`Server error: ${response.status} - ${errorData.message || response.statusText}`);
             }
-
             const userCollection = await response.json();
             console.log("User collection received:", userCollection);
-            displayGames(userCollection, true); // Call displayGames, pass true for isUserCollection
-
+            displayGames(userCollection, true); // Pass true for isUserCollection
         } catch (error) {
             console.error("Error loading collection:", error);
             myCollectionContainer.innerHTML = `<p>Failed to load your collection: ${error.message}</p>
-                                             <button id="backToSearchFromCollError">Back to Search</button>`;
-            document.getElementById('backToSearchFromCollError')?.addEventListener('click', () => {
+                                             <button id="backToSearchFromCollErrorBtn">Back to Search</button>`;
+            document.getElementById('backToSearchFromCollErrorBtn')?.addEventListener('click', () => {
                 myCollectionContainer.style.display = 'none';
                 resultsGrid.style.display = 'grid';
             });
         }
     }
 
-    // Initial game load (if you still want it)
-    async function loadInitialGames() {
-        const initialGameSearchTerm = "grand theft auto 6";
-        resultsGrid.innerHTML = `<p>Loading featured game: ${initialGameSearchTerm}...</p>`;
-        performSearchAction(initialGameSearchTerm, true); // Use a common search action
-    }
-
-    // Helper to consolidate search logic, can be called by performSearch and loadInitialGames
-    async function performSearchAction(searchTerm, isInitialLoad = false) {
-        if(!isInitialLoad) { // only manage visibility if it's a new user search
-            resultsGrid.style.display = 'grid';
-            gameDetailContainer.style.display = 'none';
-            myCollectionContainer.style.display = 'none';
-        }
-
-        try {
-            const pageSize = isInitialLoad ? 5 : 10; // Get 5 for initial, 10 for regular search
-            const apiUrl = `http://localhost:8080/api/games/search?query=${encodeURIComponent(searchTerm)}&page_size=${pageSize}`;
-            console.log(`Workspaceing from: ${apiUrl}`);
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-                 const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response from server.' }));
-                throw new Error(`Server error: ${response.status} - ${errorData.message || response.statusText}`);
-            }
-            const data = await response.json();
-            console.log('Data received:', data);
-            displayGames(data.results, false); // Display as search results
-        } catch (error) {
-            console.error(`Error during ${isInitialLoad ? 'initial load' : 'search'}:`, error);
-            resultsGrid.innerHTML = `<p>An error occurred: ${error.message}.</p>`;
-        }
-    }
-
-    // Replace original performSearch with a wrapper around performSearchAction
-    async function performSearch() {
-        const searchTerm = searchInput.value.trim();
-        if (!searchTerm) {
-            resultsGrid.style.display = 'grid';
-            gameDetailContainer.style.display = 'none';
-            myCollectionContainer.style.display = 'none';
-            displayGames([], false);
-            resultsGrid.innerHTML = '<p>Please enter a game name to search.</p>';
+    async function removeFromUserCollection(rawgGameId) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Please log in to modify your collection.");
             return;
         }
-        resultsGrid.innerHTML = '<p>Searching for results...</p>';
-        await performSearchAction(searchTerm);
+        if (!confirm("Are you sure you want to remove this game from your collection?")) {
+            return;
+        }
+        console.log(`Attempting to remove game with rawgGameId: ${rawgGameId} from collection.`);
+        try {
+            // !!! REPLACE 8080 with your actual backend port if different !!!
+            const response = await fetch(`http://localhost:8080/collection/${rawgGameId}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message || "Game removed successfully!");
+                displayGames(result.collection, true); // Refresh collection view
+            } else {
+                alert(`Failed to remove game: ${result.error || 'Unknown server error'}`);
+            }
+        } catch (error) {
+            console.error("Error removing from collection:", error);
+            alert("An error occurred while removing the game. Please try again.");
+        }
+    }
+
+
+    async function loadInitialGames() {
+        const initialGameSearchTerm = "grand theft auto 6"; // Example
+        resultsGrid.innerHTML = `<p>Loading featured game(s)...</p>`;
+        await performSearchActual(initialGameSearchTerm, true);
     }
 
     loadInitialGames(); // Load initial games when DOM is ready
