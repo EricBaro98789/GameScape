@@ -7,6 +7,92 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs'); // Using bcryptjs - easier to install
 const jwt = require('jsonwebtoken');
 
+
+// +++ NEW: Import Sequelize +++
+const { Sequelize, DataTypes } = require('sequelize');
+
+// +++ NEW: Setup Sequelize and Database Connection +++
+// This will create a file named 'gamescape_database.sqlite' in your Backend directory
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: './gamescape_database.sqlite', // Path to the database file
+  logging: console.log // Set to console.log to see SQL queries, or 'false' to disable
+});
+
+// +++ NEW: Define the User Model +++
+const User = sequelize.define('User', {
+  // Model attributes are defined here
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true, // Ensure emails are unique
+    validate: {
+      isEmail: true // Add validation for email format
+    }
+  },
+  password: { // This will store the HASHED password
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+  // Sequelize automatically adds 'createdAt' and 'updatedAt' fields
+}, {
+  // Other model options go here
+  tableName: 'users' // Explicitly set table name
+});
+
+
+// +++ NEW: Define the CollectedGame Model +++
+const CollectedGame = sequelize.define('CollectedGame', {
+  id: { // Primary key for this table
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  rawgGameId: { // The ID of the game from the RAWG API
+    type: DataTypes.INTEGER, // Assuming RAWG IDs are integers
+    allowNull: false
+  },
+  gameTitle: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  gameImage: { // URL for the game's background image
+    type: DataTypes.STRING,
+    allowNull: true // An image might not always be present
+  },
+  // userId will be added automatically by Sequelize due to the association defined below
+}, {
+  tableName: 'collected_games' // Explicitly set table name
+});
+
+// +++ NEW: Define Associations between User and CollectedGame +++
+// A User can have many CollectedGames
+User.hasMany(CollectedGame, {
+  foreignKey: {
+    name: 'userId', // This will create a userId column in the CollectedGame table
+    allowNull: false
+  },
+  onDelete: 'CASCADE' // If a user is deleted, delete their collected games too
+});
+// A CollectedGame belongs to one User
+CollectedGame.belongsTo(User, {
+  foreignKey: {
+    name: 'userId',
+    allowNull: false
+  }
+});
+
+
+
 // Create an instance of an Express application
 const app = express();
 
@@ -17,8 +103,8 @@ app.use(express.json()); // Crucial for parsing JSON request bodies for register
 const port = process.env.PORT || 8080;
 
 // --- In-memory storage (Data will be lost on server restart) ---
-const users = {}; // Format: users['user@example.com'] = { username: 'name', password: 'hashedPassword' }
-const collections = {}; // Format: collections['user@example.com'] = [{gameId: ..., gameTitle: ..., gameImage: ...}, ...]
+//const users = {}; // Format: users['user@example.com'] = { username: 'name', password: 'hashedPassword' }
+//const collections = {}; // Format: collections['user@example.com'] = [{gameId: ..., gameTitle: ..., gameImage: ...}, ...]
 
 // --- IMPORTANT: JWT Secret Key ---
 
@@ -92,146 +178,266 @@ app.get('/api/games/:id', async (req, res) => {
   }
 });
 
-// --- User Registration Route ---
+
+// --- User Registration Route (Modified to use Sequelize User model) ---
 app.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    // Basic validation
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
-    if (users[email]) {
+
+    // Check if user with this email already exists in the database
+    const existingUser = await User.findOne({ where: { email: email } });
+    if (existingUser) {
+      console.log(`Registration attempt for existing email: ${email}`);
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    users[email] = { username, password: hashedPassword };
-    console.log('User registered:', users[email]); // For debugging
-    res.status(201).json({ message: 'Registration successful! Please log in.' });
+    // Create the new user in the database
+    const newUser = await User.create({
+      username: username,
+      email: email,
+      password: hashedPassword // Store the hashed password
+    });
+
+    // newUser contains the created user data from the database, including the auto-generated id
+    console.log('User registered and saved to database:', newUser.toJSON()); // .toJSON() gives a plain object
+
+    // Respond with success message (don't send back the password, even hashed)
+    res.status(201).json({
+        message: 'Registration successful! Please log in.',
+        user: { // Optionally send back some non-sensitive user info
+            id: newUser.id,
+            username: newUser.username,
+            email: newUser.email
+        }
+    });
+
   } catch (error) {
-    console.error('Error during registration:', error);
+    console.error("Error during database registration:", error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      // This error occurs if 'unique: true' constraint is violated (e.g., email already exists)
+      // Our manual check above should catch it first for email, but this is a good fallback.
+      return res.status(400).json({ error: 'Email already registered (database constraint).' });
+    }
+    if (error.name === 'SequelizeValidationError') {
+      // This occurs if model validations fail (e.g., allowNull: false, or the isEmail validation)
+      const messages = error.errors.map(e => e.message);
+      return res.status(400).json({ error: 'Validation error(s)', details: messages });
+    }
+    // General server error
     res.status(500).json({ error: 'Server error during registration' });
   }
 });
 
-// --- User Login Route ---
+
+
+
+// --- User Login Route (Modified to use Sequelize User model) ---
 app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Basic validation
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = users[email];
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials - user not found' });
+    // Find the user in the database by email
+    const userInDb = await User.findOne({ where: { email: email } });
+
+    if (!userInDb) {
+      // User not found with that email.
+      // It's good security practice to give a generic message for both non-existent user and wrong password.
+      console.log(`Login attempt for non-existent email: ${email}`);
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Compare the provided password with the stored hashed password
+    const isMatch = await bcrypt.compare(password, userInDb.password);
+
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials - password incorrect' });
+      // Password does not match
+      console.log(`Login attempt with incorrect password for email: ${email}`);
+      return res.status(401).json({ error: 'Invalid email or password' }); // Generic message
     }
 
+    // User authenticated successfully, create JWT
+    // Include user ID in the token payload, it's useful for associating data later
     const tokenPayload = {
-      email: email,
-      username: user.username
+      id: userInDb.id,
+      email: userInDb.email,
+      username: userInDb.username
     };
+
+    // JWT_SECRET should be defined globally in your server.js
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '1h' }); // Token expires in 1 hour
 
-    res.json({ message: 'Login successful!', token: token, username: user.username });
+    console.log(`User logged in successfully: ${userInDb.email} (ID: ${userInDb.id})`);
+    res.json({
+      message: 'Login successful!',
+      token: token,
+      user: { // Send back some user info (excluding password)
+        id: userInDb.id,
+        username: userInDb.username,
+        email: userInDb.email
+      }
+    });
+
   } catch (error) {
-    console.error('Error during login:', error);
+    console.error("Error during login:", error);
     res.status(500).json({ error: 'Server error during login' });
   }
 });
 
-// +++ IMPLEMENTING /collection Endpoints +++
 
-// --- Add Game to User's Collection (POST) ---
-app.post('/collection', (req, res) => {
+
+
+// --- Add Game to User's Collection (POST) - Database Version ---
+app.post('/collection', async (req, res) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('POST /collection: Auth header missing or malformed');
         return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
     }
     const token = authHeader.split(' ')[1];
+    console.log('POST /collection: Token received');
 
     try {
-        const decodedToken = jwt.verify(token, JWT_SECRET); // Verify using your actual JWT_SECRET
-        const userEmail = decodedToken.email;
+        const decodedToken = jwt.verify(token, JWT_SECRET);
+        console.log('POST /collection: Token decoded:', decodedToken);
+        const userIdFromToken = decodedToken.id;
 
-        if (!userEmail) {
-            // This case should ideally be caught by jwt.verify if email is not in payload
-            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing email)' });
+        if (!userIdFromToken) {
+            console.log('POST /collection: userId missing in decoded token');
+            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing user ID)' });
         }
 
         const gameData = req.body;
-        // Basic validation for incoming game data (expected from your frontend addToCollection)
-        if (!gameData || typeof gameData.gameId === 'undefined' || !gameData.gameTitle) { // gameId can be 0
-            return res.status(400).json({ error: 'Bad Request: gameId and gameTitle are required in the request body' });
+        console.log('POST /collection: Received gameData from request body:', gameData);
+
+        if (typeof gameData.gameId === 'undefined' || !gameData.gameTitle) {
+            console.log('POST /collection: Bad request - gameId or gameTitle missing');
+            return res.status(400).json({ error: 'Bad Request: gameId and gameTitle are required' });
         }
 
-        if (!collections[userEmail]) {
-            collections[userEmail] = []; // Initialize collection for the user if it doesn't exist
+        console.log(`POST /collection: Checking if gameId ${gameData.gameId} for userId ${userIdFromToken} already exists...`);
+        const existingEntry = await CollectedGame.findOne({
+            where: {
+                userId: userIdFromToken,
+                rawgGameId: gameData.gameId
+            }
+        });
+
+        if (existingEntry) {
+            console.log(`POST /collection: Game ID ${gameData.gameId} already in user ID ${userIdFromToken}'s collection.`);
+            const currentCollection = await CollectedGame.findAll({ where: { userId: userIdFromToken } });
+            return res.status(200).json({ message: 'Game is already in your collection', collection: currentCollection });
         }
 
-        // Optional: Check if the game (by gameId) already exists in this user's collection
-        const gameExists = collections[userEmail].find(game => game.gameId === gameData.gameId);
-        if (gameExists) {
-            console.log(`Game ID ${gameData.gameId} already in ${userEmail}'s collection.`);
-            return res.status(200).json({ message: 'Game is already in your collection', collection: collections[userEmail] });
-        }
+        const gameToSave = {
+            userId: userIdFromToken,
+            rawgGameId: parseInt(gameData.gameId), // Ensure rawgGameId is an integer if your model expects it
+            gameTitle: gameData.gameTitle,
+            gameImage: gameData.gameImage
+        };
+        console.log('POST /collection: Attempting to create entry in DB with:', gameToSave);
+        const newCollectedGame = await CollectedGame.create(gameToSave);
 
-        collections[userEmail].push(gameData);
-        console.log(`Game added to ${userEmail}'s collection. Current collection size: ${collections[userEmail].length}`);
-        // For debugging, you can log the whole collection: console.log(collections[userEmail]);
-        res.status(201).json({ message: 'Game added to your collection!', collection: collections[userEmail] });
+        console.log(`POST /collection: Game rawgGameId ${newCollectedGame.rawgGameId} (DB ID: ${newCollectedGame.id}) added to userId ${userIdFromToken}'s collection.`);
+        const updatedCollection = await CollectedGame.findAll({ where: { userId: userIdFromToken } });
+        res.status(201).json({ message: 'Game added to your collection!', collection: updatedCollection });
 
     } catch (error) {
-        console.error('Error in POST /collection:', error.message);
+        console.error('POST /collection: Error ->', error.name, ':', error.message);
         if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
             return res.status(403).json({ error: 'Forbidden: Invalid or expired token. Please log in again.' });
         }
+        // Log the full error for more details if it's a Sequelize or other error
+        console.error('POST /collection: Full error object:', error);
         res.status(500).json({ error: 'Server error while adding game to collection' });
     }
 });
 
-// --- Get User's Collection (GET) ---
-app.get('/collection', (req, res) => {
+// --- Get User's Collection (GET) - Database Version ---
+app.get('/collection', async (req, res) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('GET /collection: Auth header missing or malformed');
         return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
     }
     const token = authHeader.split(' ')[1];
+    console.log('GET /collection: Token received');
 
     try {
-        const decodedToken = jwt.verify(token, JWT_SECRET); // Verify using your actual JWT_SECRET
-        const userEmail = decodedToken.email;
+        const decodedToken = jwt.verify(token, JWT_SECRET);
+        console.log('GET /collection: Token decoded:', decodedToken);
+        const userIdFromToken = decodedToken.id;
 
-        if (!userEmail) {
-            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing email)' });
+        if (!userIdFromToken) {
+            console.log('GET /collection: userId missing in decoded token');
+            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing user ID)' });
         }
 
-        const userCollection = collections[userEmail] || []; 
-        console.log(`Workspaceing collection for ${userEmail}. Found ${userCollection.length} items.`);
+        console.log(`GET /collection: Fetching collection for userId ${userIdFromToken}...`);
+        const userCollection = await CollectedGame.findAll({
+            where: { userId: userIdFromToken },
+            order: [['createdAt', 'DESC']]
+        });
+
+        console.log(`GET /collection: Found ${userCollection.length} items for userId ${userIdFromToken}.`);
         res.status(200).json(userCollection);
 
     } catch (error) {
-        console.error('Error in GET /collection:', error.message);
+        console.error('GET /collection: Error ->', error.name, ':', error.message);
         if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
             return res.status(403).json({ error: 'Forbidden: Invalid or expired token. Please log in again.' });
         }
+        console.error('GET /collection: Full error object:', error);
         res.status(500).json({ error: 'Server error while fetching collection' });
     }
 });
 
-// +++ END OF /collection Endpoints +++
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-});
+
+// +++ NEW: Function to test DB connection and sync models +++
+async function initializeDatabaseAndStartServer() {
+  try {
+    await sequelize.authenticate(); // Test the connection
+    console.log('Connection to the database has been established successfully.');
+
+    // Sync all defined models to the DB.
+    // This creates the table if it doesn't exist (and does nothing if it already exists).
+    // Use { alter: true } in development to make Sequelize try to update tables to match model changes.
+    // Use { force: true } to drop and recreate tables (DANGEROUS - DELETES DATA). Not recommended for general use.
+    await sequelize.sync({ alter: false }); // Using alter: true for development flexibility
+    console.log('All models were synchronized successfully. User table is ready.');
+
+    // Start the server only after DB sync is successful
+    app.listen(port, () => {
+      console.log(`Server listening at http://localhost:${port}`);
+    });
+
+  } catch (error) {
+    console.error('Unable to connect to the database or sync models:', error);
+    // Exit the process if DB connection fails, as the app might not function correctly
+    process.exit(1);
+  }
+}
+
+// Call the function to initialize DB and start the server
+initializeDatabaseAndStartServer();
+
+// // Start the server
+// app.listen(port, () => {
+//   console.log(`Server listening at http://localhost:${port}`);
+// });
