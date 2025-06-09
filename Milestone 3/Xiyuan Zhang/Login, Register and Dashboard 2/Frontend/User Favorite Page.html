@@ -4,7 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Details - Cyberpunk 2077</title>
-  <link rel="stylesheet" href="assets/css/User Favorite Page.css" >
+  <link rel="stylesheet" href="assets/css/User Favorite Page.css">
+  <style>
+    .stars-input .star {
+      font-size: 24px;
+      cursor: pointer;
+      color: gray;
+      user-select: none;
+    }
+    .stars-input .star.selected {
+      color: gold;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -19,7 +30,6 @@
     <img src="cyberpunk-banner.jpg" alt="Cyberpunk 2077">
     <div class="banner-title">
       <h1>Cyberpunk 2077</h1>
-      <!--<div class="platform-icons"></div>-->
     </div>
   </div>
 
@@ -35,8 +45,7 @@
       <div class="left-column">
         <div class="about">
           <h2>About This Game</h2>
-          <p>Embark on an epic journey in Cyberpunk 2077, where you'll explore a vast open world set in a dystopian future. As a legendary mercenary, you'll navigate through the neon-lit streets of Night City, taking on dangerous missions and making choices that will shape the fate of the city.</p>
-          <p>The game features cutting-edge graphics, an immersive story, and deep character customization.</p>
+          <p>Embark on an epic journey in Cyberpunk 2077, where you'll explore a vast open world set in a dystopian future...</p>
         </div>
 
         <div class="screenshots">
@@ -76,32 +85,102 @@
         <div class="price">$59.99 <span class="stars">⭐⭐⭐⭐☆ (4.2)</span></div>
         <h3>Add to Library</h3>
         <label>Play Status</label>
-        <select>
+        <select id="statusSelect">
           <option>WishList</option>
           <option>Currently Playing</option>
           <option>Completed</option>
         </select>
 
         <label>Hours Played</label>
-        <input type="number" placeholder="0">
+        <input type="number" id="hoursInput" placeholder="0">
 
         <label>Your Rating</label>
-        <div class="stars-input">⭐ ⭐ ⭐ ⭐ ⭐</div>
+        <div class="stars-input" id="userRatingInput">
+          <span class="star" data-value="1">☆</span>
+          <span class="star" data-value="2">☆</span>
+          <span class="star" data-value="3">☆</span>
+          <span class="star" data-value="4">☆</span>
+          <span class="star" data-value="5">☆</span>
+        </div>
 
         <label>Personal Tags</label>
-        <div class="tags">
-          <span>RPG</span>
-          <span>Story-rich</span>
-          <span>Open World</span>
-        </div>
-        <input type="text" placeholder="Add tags...">
+        <input type="text" id="tagsInput" placeholder="Add tags...">
 
         <label>Personal Notes</label>
-        <textarea placeholder="Write your thoughts about the game..."></textarea>
+        <textarea id="notesTextarea" placeholder="Write your thoughts about the game..."></textarea>
 
         <button class="save-btn">Save to Library</button>
       </aside>
     </section>
   </main>
+
+  <script>
+    let currentRating = 0;
+
+    document.querySelectorAll('#userRatingInput .star').forEach(star => {
+      star.addEventListener('click', () => {
+        currentRating = parseInt(star.getAttribute('data-value'));
+        updateStarDisplay(currentRating);
+      });
+    });
+
+    function updateStarDisplay(rating) {
+      document.querySelectorAll('#userRatingInput .star').forEach(star => {
+        const value = parseInt(star.getAttribute('data-value'));
+        if (value <= rating) {
+          star.classList.add('selected');
+          star.textContent = '★';
+        } else {
+          star.classList.remove('selected');
+          star.textContent = '☆';
+        }
+      });
+    }
+
+    document.querySelector('.save-btn').addEventListener('click', async () => {
+      const status = document.getElementById('statusSelect').value;
+      const hoursPlayed = parseInt(document.getElementById('hoursInput').value || 0);
+      const tags = document.getElementById('tagsInput').value;
+      const notes = document.getElementById('notesTextarea').value;
+      const userRating = currentRating || 0;
+
+      const gameId = 12345; // Replace with actual ID if dynamic
+      const gameTitle = "Cyberpunk 2077";
+      const gameImage = "cyberpunk-banner.jpg";
+      const rating = 9.2;
+      const token = localStorage.getItem('token');
+
+      try {
+        const response = await fetch('http://localhost:8080/collection', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            gameId,
+            gameTitle,
+            gameImage,
+            rating,
+            status,
+            hoursPlayed,
+            userRating,
+            tags,
+            notes
+          })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert("Game saved to your library!");
+        } else {
+          alert("Failed to save game: " + result.error);
+        }
+      } catch (err) {
+        console.error("Error saving game:", err);
+        alert("Something went wrong.");
+      }
+    });
+  </script>
 </body>
 </html>
