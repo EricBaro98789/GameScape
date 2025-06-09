@@ -14,14 +14,22 @@ const sequelize = new Sequelize({
   storage: './gamescape_database.sqlite', // Path to the database file in Backend folder
   logging: console.log // Shows SQL queries in console; set to false to disable
 });
+sequelize.sync({ alter: true }).then(() => {
+  console.log("✅ All models were synchronized successfully.");
+});
+
 
 // --- Define User Model ---
 const User = sequelize.define('User', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   username: { type: DataTypes.STRING, allowNull: false },
   email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
-  password: { type: DataTypes.STRING, allowNull: false }
+  password: { type: DataTypes.STRING, allowNull: false },
+  isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false },//
+  avatar_url: { type: DataTypes.STRING }, //
+  address: { type: DataTypes.STRING }      // 
 }, { tableName: 'users' });
+
 
 // --- Define CollectedGame Model (with rating) ---
 const CollectedGame = sequelize.define('CollectedGame', {
@@ -58,7 +66,148 @@ const RAWG_API_KEY = '49019cbf03744419a483362b07d2f0a1'; // Your RAWG API Key
 // REPLACE THIS WITH YOUR OWN UNIQUE, STRONG SECRET! DO NOT USE YOUR RAWG API KEY.
 const JWT_SECRET = 'YOUR_VERY_OWN_SUPER_STRONG_AND_RANDOM_SECRET_KEY_123!@#';
 
+//Import multer
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "-" + file.originalname;
+    cb(null, uniqueName);
+  },
+});
+const upload = multer({ storage });
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 // --- Routes ---
+
+// --- Admin Routes ---
+
+//Add new user (administrators only)
+app.post('/admin/users/add', async (req, res) => {
+  const { username, email, password, role } = req.body;
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+
+  const existing = await User.findOne({ where: { email } });
+  if (existing) {
+    return res.status(409).json({ message: "Email already exists" });
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+  await User.create({
+    username,
+    email,
+    password_hash: hashed,
+    role: role === "admin" ? "admin" : "user"
+  });
+
+  res.status(201).json({ message: "User created" });
+});
+
+//Get all user list (administrators only)
+app.get('/admin/users', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
+    }
+    const token = authHeader.split(' ')[1];
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+
+
+
+
+    // Check whether the current user is an administrator
+    const adminUser = await User.findByPk(decodedToken.id);
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+
+    const allUsers = await User.findAll({ attributes: ['id', 'username', 'email', 'isAdmin'] });
+    res.status(200).json(allUsers);
+  } catch (error) {
+    console.error('Error in /admin/users:', error.message);
+    res.status(500).json({ error: 'Server error while fetching users' });
+  }
+});
+
+// Delete specified users (administrators only)
+app.delete('/admin/users/:id', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const token = authHeader.split(' ')[1];
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+
+    const adminUser = await User.findByPk(decodedToken.id);
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+
+    const deletedCount = await User.destroy({ where: { id: req.params.id } });
+    if (deletedCount > 0) {
+      res.status(200).json({ message: 'User deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error in DELETE /admin/users/:id:', error.message);
+    res.status(500).json({ error: 'Server error while deleting user' });
+  }
+});
+
+// Modify user roles (assign administrator privileges)
+app.put('/admin/users/:id/role', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const token = authHeader.split(' ')[1];
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+
+    const adminUser = await User.findByPk(decodedToken.id);
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+
+    const { isAdmin } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.isAdmin = isAdmin;
+    await user.save();
+
+    res.status(200).json({ message: `User role updated to ${isAdmin ? 'admin' : 'regular'}` });
+  } catch (error) {
+    console.error('Error in PUT /admin/users/:id/role:', error.message);
+    res.status(500).json({ error: 'Server error while updating user role' });
+  }
+});
+
+//update
+app.put("/admin/users/:id/update", upload.single("avatar"), async (req, res) => {
+  const userId = req.params.id;
+  const { address } = req.body;
+  const updateFields = {};
+
+  if (address) updateFields.address = address;
+  if (req.file) {
+    updateFields.avatar_url = "/uploads/" + req.file.filename;
+  }
+
+  await User.update(updateFields, { where: { user_id: userId } });
+  res.json({ success: true, updated: updateFields });
+});
+
+
 
 // Root Route
 app.get('/', (req, res) => {
@@ -261,47 +410,48 @@ app.get('/collection', async (req, res) => {
 
 // Remove Game from User's Collection
 app.delete('/collection/:rawgGameId', async (req, res) => {
-    const authHeader = req.headers.authorization;
-    const rawgGameIdToRemove = parseInt(req.params.rawgGameId);
+  const authHeader = req.headers.authorization;
+  const rawgGameIdToRemove = parseInt(req.params.rawgGameId);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or malformed token' });
+  }
+  const token = authHeader.split(' ')[1];
+
+  if (isNaN(rawgGameIdToRemove)) {
+    return res.status(400).json({ error: 'Bad Request: Valid rawgGameId parameter is required' });
+  }
+
+  try {
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+    const userIdFromToken = decodedToken.id;
+    if (!userIdFromToken) {
+      return res.status(403).json({ error: 'Forbidden: Token is invalid (missing user ID)' });
     }
-    const token = authHeader.split(' ')[1];
 
-    if (isNaN(rawgGameIdToRemove)) {
-        return res.status(400).json({ error: 'Bad Request: Valid rawgGameId parameter is required' });
+    console.log(`Attempting to remove rawgGameId: ${rawgGameIdToRemove} for userId: ${userIdFromToken}`);
+    const result = await CollectedGame.destroy({
+      where: { userId: userIdFromToken, rawgGameId: rawgGameIdToRemove }
+    });
+
+    if (result > 0) {
+      console.log(`Game rawgGameId ${rawgGameIdToRemove} removed from collection for userId ${userIdFromToken}.`);
+      const updatedCollection = await CollectedGame.findAll({ where: { userId: userIdFromToken }, order: [['createdAt', 'DESC']] });
+      res.status(200).json({ message: 'Game removed from collection', collection: updatedCollection });
+    } else {
+      console.log(`Game rawgGameId ${rawgGameIdToRemove} not found in collection for userId ${userIdFromToken}.`);
+      const currentCollection = await CollectedGame.findAll({ where: { userId: userIdFromToken }, order: [['createdAt', 'DESC']] });
+      res.status(404).json({ error: 'Game not found in collection', collection: currentCollection });
     }
-
-    try {
-        const decodedToken = jwt.verify(token, JWT_SECRET);
-        const userIdFromToken = decodedToken.id;
-        if (!userIdFromToken) {
-            return res.status(403).json({ error: 'Forbidden: Token is invalid (missing user ID)' });
-        }
-
-        console.log(`Attempting to remove rawgGameId: ${rawgGameIdToRemove} for userId: ${userIdFromToken}`);
-        const result = await CollectedGame.destroy({
-            where: { userId: userIdFromToken, rawgGameId: rawgGameIdToRemove }
-        });
-
-        if (result > 0) {
-            console.log(`Game rawgGameId ${rawgGameIdToRemove} removed from collection for userId ${userIdFromToken}.`);
-            const updatedCollection = await CollectedGame.findAll({ where: { userId: userIdFromToken }, order: [['createdAt', 'DESC']] });
-            res.status(200).json({ message: 'Game removed from collection', collection: updatedCollection });
-        } else {
-            console.log(`Game rawgGameId ${rawgGameIdToRemove} not found in collection for userId ${userIdFromToken}.`);
-            const currentCollection = await CollectedGame.findAll({ where: { userId: userIdFromToken }, order: [['createdAt', 'DESC']] });
-            res.status(404).json({ error: 'Game not found in collection', collection: currentCollection });
-        }
-    } catch (error) {
-        console.error('Error in DELETE /collection/:rawgGameId:', error.message);
-        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-            return res.status(403).json({ error: 'Forbidden: Invalid or expired token' });
-        }
-        res.status(500).json({ error: 'Server error while removing game from collection' });
+  } catch (error) {
+    console.error('Error in DELETE /collection/:rawgGameId:', error.message);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(403).json({ error: 'Forbidden: Invalid or expired token' });
     }
+    res.status(500).json({ error: 'Server error while removing game from collection' });
+  }
 });
+
 
 
 // --- Initialize Database and Start Server ---
