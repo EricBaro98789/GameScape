@@ -1,5 +1,6 @@
 // Frontend/assets/js/search.js
 document.addEventListener('DOMContentLoaded', () => {
+
     const searchInput = document.getElementById('gameSearchInput');
     const searchButton = document.getElementById('gameSearchButton');
     const resultsGrid = document.getElementById('gameResultsGrid');
@@ -289,6 +290,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: "GET",
                 headers: { "Authorization": `Bearer ${token}` }
             });
+            if (response.status === 403 || response.status === 401) {
+                handleUnauthorized("登录过期或未授权，请重新登录。");
+                return;
+            }
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ message: 'Failed to parse error from server.' }));
                 throw new Error(`Server error: ${response.status} - ${errorData.message || response.statusText}`);
@@ -343,5 +349,13 @@ document.addEventListener('DOMContentLoaded', () => {
         await performSearchActual(initialGameSearchTerm, true);
     }
 
-    loadInitialGames(); // Load initial games when DOM is ready
-});
+        loadInitialGames(); // Load initial games when DOM is ready
+    });
+
+    // logout 函数现在是全局作用域，可以被 HTML 调用
+    function logout() {
+     console.log("Logging out...");
+     localStorage.removeItem("token");
+     alert("successfully log out");
+     window.location.href = "login.html";
+    }
