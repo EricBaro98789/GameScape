@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>GameScape Dashboard</title>
   <link rel="stylesheet" href="assets/css/dashboard.css" />
 </head>
+
 <body>
+  <button id="themeToggle">🌙 Toggle Dark/Light Mode</button>
+
   <div class="container">
     <h1>GameScape</h1>
 
@@ -19,11 +23,18 @@
       <div id="results"></div>
     </div>
 
+    <!-- Add export button -->
+    <div style="margin-bottom: 10px;">
+      <button id="exportJSON">Export as JSON</button>
+      <button id="exportCSV">Export as CSV</button>
+    </div>
+
     <div class="section">
       <h2>My Collection</h2>
       <button id="collectionBtn">Load Collection</button>
       <div id="collection"></div>
     </div>
+
   </div>
 
   <script>
@@ -97,5 +108,43 @@
       });
     }
   </script>
+
+  <!-- 管理员功能区域 -->
+  <div id="admin-section" style="display:none; margin-top: 40px;">
+    <h2>Admin: User Management</h2>
+    <table id="userTable" border="1" cellpadding="8" cellspacing="0">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Change Role</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody">
+        <!-- 用户数据将被 JS 插入 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const toggleButton = document.getElementById('themeToggle');
+    toggleButton.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+
+    // 页面加载时根据保存的主题自动切换
+    window.onload = function () {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+    }
+  </script>
+
+
 </body>
+
 </html>

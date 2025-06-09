@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to GameScape</title>
-    <link rel="stylesheet" href="assets/css/index.css">
+    <link id="themeStylesheet" rel="stylesheet" href="light.css">
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.getElementById('themeStylesheet').href = savedTheme + '.css';
+    </script>
 </head>
 
 <body>
@@ -24,6 +28,8 @@
             </div>
         </div>
     </div>
+    <button id="toggleThemeBtn">Toggle Dark/Light Mode</button>
+
 </body>
 
 </html>

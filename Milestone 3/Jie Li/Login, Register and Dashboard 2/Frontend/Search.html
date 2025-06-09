@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GameScape Search</title>
     <link rel="stylesheet" href="assets/css/search-style.css" />
 </head>
+
 <body>
+    <button id="themeToggle">🌙 Toggle Dark/Light Mode</button>
     <video autoplay muted loop id="bg-video">
         <source src="assets/videos/gta.mp4" type="video/mp4">
         Your browser does not support the video tag.
@@ -34,6 +37,11 @@
             <button type="button" id="gameSearchButton">Search</button>
             <button type="button" id="loadCollectionBtn" style="margin-left: 10px;">My Collection</button>
         </div>
+        <div class="export-buttons" style="margin-top: 10px;">
+            <button onclick="exportAsJSON()">Export as JSON</button>
+            <button onclick="exportAsCSV()">Export as CSV</button>
+        </div>
+
 
         <div class="filters">
             <div class="popular-tags">
@@ -63,13 +71,14 @@
             </div>
         </div>
 
-        <p>Showing results</p> <div class="game-grid" id="gameResultsGrid">
-            </div>
+        <p>Showing results</p>
+        <div class="game-grid" id="gameResultsGrid">
+        </div>
 
         <div id="myCollectionContainer" class="game-grid" style="display:none;">
-            </div>
+        </div>
 
-        </main>
+    </main>
 
     <footer>
         <div class="footer-columns">
@@ -99,5 +108,57 @@
             &copy; 2025 GameScape. All rights reserved. </div>
     </footer>
     <script src="assets/js/search.js"></script>
+    <script>
+        const toggleButton = document.getElementById('themeToggle');
+        toggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        window.onload = function () {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+    </script>
+    <script>
+        function exportAsJSON() {
+            const games = [...document.querySelectorAll('#gameResultsGrid .game-card')].map(card => {
+                return {
+                    title: card.querySelector('.game-title')?.textContent || '',
+                    platform: card.querySelector('.game-platform')?.textContent || '',
+                    rating: card.querySelector('.game-rating')?.textContent || ''
+                };
+            });
+            const blob = new Blob([JSON.stringify(games, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            downloadFile(url, 'games.json');
+        }
+
+        function exportAsCSV() {
+            const rows = [['Title', 'Platform', 'Rating']];
+            const cards = document.querySelectorAll('#gameResultsGrid .game-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.game-title')?.textContent || '';
+                const platform = card.querySelector('.game-platform')?.textContent || '';
+                const rating = card.querySelector('.game-rating')?.textContent || '';
+                rows.push([title, platform, rating]);
+            });
+            const csvContent = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            downloadFile(url, 'games.csv');
+        }
+
+        function downloadFile(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+    </script>
+
 </body>
+
 </html>
