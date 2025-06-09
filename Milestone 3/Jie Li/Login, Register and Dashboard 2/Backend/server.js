@@ -14,9 +14,7 @@ const sequelize = new Sequelize({
   storage: './gamescape_database.sqlite', // Path to the database file in Backend folder
   logging: console.log // Shows SQL queries in console; set to false to disable
 });
-sequelize.sync({ alter: true }).then(() => {
-  console.log("✅ All models were synchronized successfully.");
-});
+
 
 
 // --- Define User Model ---
