@@ -21,81 +21,98 @@
 
     <div class="section">
       <h2>My Collection</h2>
+      <p>Type in the search box above to filter your saved games.</p>
       <button id="collectionBtn">Load Collection</button>
       <div id="collection"></div>
     </div>
   </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.getElementById("searchBtn").addEventListener("click", searchGames);
-      document.getElementById("collectionBtn").addEventListener("click", loadCollection);
+<script>
+  let cachedCollection = [];
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("searchBtn").addEventListener("click", searchGames);
+    document.getElementById("collectionBtn").addEventListener("click", loadCollection);
+    document.getElementById("searchBox").addEventListener("input", searchMyCollection);
+  });
+
+  async function loadCollection() {
+    const token = localStorage.getItem("token");
+    const response = await fetch("http://localhost:8080/collection", {
+      headers: { Authorization: "Bearer " + token },
     });
+    const data = await response.json();
+    cachedCollection = data;
+    renderCollection(data);
+  }
 
-    async function searchGames() {
-      const query = document.getElementById("searchBox").value;
-      const response = await fetch(`http://localhost:8080/api/games/search?query=${encodeURIComponent(query)}`);
-      const data = await response.json();
 
-      const results = document.getElementById("results");
-      results.innerHTML = ""; // Clear old results
+  function renderCollection(data) {
+    const collectionDiv = document.getElementById("collection");
+    collectionDiv.innerHTML = "";
+    data.forEach(function (item) {
+      const gameDiv = document.createElement("div");
+      gameDiv.className = "game-card";
+      gameDiv.innerHTML = `
+        <h4>${item.gameTitle}</h4>
+        <img src="${item.gameImage}" width="150" />
+      `;
+      collectionDiv.appendChild(gameDiv);
+    });
+  }
 
-      data.results.forEach(function (game) {
-        const gameDiv = document.createElement("div");
-        gameDiv.className = "game-card";
-        gameDiv.innerHTML = `
-          <h3>${game.name}</h3>
-          <img src="${game.background_image}" width="200" />
-          <button>Add to Collection</button>
-        `;
+  function searchMyCollection() {
+    const keyword = document.getElementById("searchBox").value.toLowerCase();
+    const filtered = cachedCollection.filter(game =>
+      game.gameTitle.toLowerCase().includes(keyword)
+    );
+    renderCollection(filtered);
+  }
 
-        const button = gameDiv.querySelector("button");
-        button.addEventListener("click", function () {
-          addToCollection(game);
-          button.disabled = true;
-          button.textContent = "✔ Collected";
-        });
+  async function searchGames() {
+    const query = document.getElementById("searchBox").value;
+    const response = await fetch(`http://localhost:8080/api/games/search?query=${encodeURIComponent(query)}`);
+    const data = await response.json();
 
-        results.appendChild(gameDiv);
+    const results = document.getElementById("results");
+    results.innerHTML = "";
+
+    data.results.forEach(function (game) {
+      const gameDiv = document.createElement("div");
+      gameDiv.className = "game-card";
+      gameDiv.innerHTML = `
+        <h3>${game.name}</h3>
+        <img src="${game.background_image}" width="200" />
+        <button>Add to Collection</button>
+      `;
+
+      const button = gameDiv.querySelector("button");
+      button.addEventListener("click", function () {
+        addToCollection(game);
+        button.disabled = true;
+        button.textContent = "✔ Collected";
       });
-    }
 
-    async function addToCollection(game) {
-      const token = localStorage.getItem("token");
-      await fetch("/collection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token,
-        },
-        body: JSON.stringify({
-          gameId: game.id,
-          gameTitle: game.name,
-          gameImage: game.background_image,
-        }),
-      });
-    }
+      results.appendChild(gameDiv);
+    });
+  }
 
-    async function loadCollection() {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/collection", {
-        headers: { Authorization: "Bearer " + token },
-      });
-      const data = await response.json();
+  async function addToCollection(game) {
+    const token = localStorage.getItem("token");
+    await fetch("http://localhost:8080/collection", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+      },
+      body: JSON.stringify({
+        gameId: game.id,
+        gameTitle: game.name,
+        gameImage: game.background_image,
+      }),
+    });
+  }
+</script>
 
-      const collectionDiv = document.getElementById("collection");
-      collectionDiv.innerHTML = ""; // Clear old content
-
-      data.forEach(function (item) {
-        const gameDiv = document.createElement("div");
-        gameDiv.className = "game-card";
-        gameDiv.innerHTML = `
-          <h4>${item.gameTitle}</h4>
-          <img src="${item.gameImage}" width="150" />
-        `;
-        collectionDiv.appendChild(gameDiv);
-      });
-    }
-  </script>
 </body>
 </html>
