@@ -1,0 +1,84 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f3f0fc;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 默认亮色模式样式 */
+body.light-mode {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/* 暗色模式样式 */
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* 示例：导航栏、卡片等自定义组件可以根据模式设色 */
+.navbar.dark-mode,
+.card.dark-mode {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+
+.container {
+    background: white;
+    margin-top: 40px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+}
+
+h1,
+h2 {
+    margin-bottom: 20px;
+}
+
+.search-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+input[type="text"] {
+    padding: 12px;
+    width: 65%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    background-color: #6a0dad;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-size: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #5910b1;
+}
+
+.section {
+    margin-top: 40px;
+    text-align: center;
+}
+
+#results,
