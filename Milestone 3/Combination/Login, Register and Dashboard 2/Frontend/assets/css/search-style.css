@@ -232,12 +232,12 @@ body.dark-mode footer a {
 }
 
 /* Search bar and other inputs */
-body.dark-mode .search-bar input,
+/* body.dark-mode .search-bar input,
 body.dark-mode .sort-by select {
     background-color: #3a3b3c;
     color: #e4e6eb;
     border: 1px solid #555;
-}
+} */
 
 /* Game cards in dark mode */
 body.dark-mode .game-card {
@@ -271,4 +271,136 @@ body.dark-mode #themeToggle {
   left: 200px;
   z-index: 1000;  /* High number to ensure it's on top of everything */
   cursor: pointer;
+}
+
+.game-detail-view {
+    background-color: #a9a4a4;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    color: #333;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dark-mode .game-detail-view {
+    background-color: #242526;
+    color: #e4e6eb;
+    border: 1px solid #3a3b3c;
+}
+
+.back-button {
+    background: none;
+    border: 1px solid #ccc;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.dark-mode .back-button {
+    border-color: #555;
+    color: #e4e6eb;
+}
+.back-button:hover {
+    background-color: #f0f0f0;
+}
+.dark-mode .back-button:hover {
+    background-color: #3a3b3c;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.dark-mode .detail-header {
+    border-bottom-color: #3a3b3c;
+}
+
+.detail-header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+}
+
+.detail-rating {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #eab308;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-main-content {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+}
+
+.detail-image {
+    flex: 1; /* Allows image to take up space */
+    min-width: 300px; /* Prevents image from getting too small */
+    max-width: 500px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.detail-info {
+    flex: 2; /* Allows info section to take up more space */
+    min-width: 300px;
+}
+
+.detail-info p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.detail-info p strong {
+    display: block;
+    color: #555;
+    margin-bottom: 0.25rem;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.dark-mode .detail-info p strong {
+    color: #aaa;
+}
+
+.detail-info a {
+    color: #6d28d9;
+    text-decoration: none;
+    word-break: break-all;
+}
+.dark-mode .detail-info a {
+    color: #9f7aea;
+}
+.detail-info a:hover {
+    text-decoration: underline;
+}
+
+.detail-description {
+    margin-top: 2rem;
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+}
+
+.dark-mode .detail-description {
+    border-top-color: #3a3b3c;
+}
+
+.detail-description p {
+    line-height: 1.7;
+    white-space: pre-wrap; /* Respects line breaks from description_raw */
 }

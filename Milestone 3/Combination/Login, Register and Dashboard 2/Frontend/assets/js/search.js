@@ -115,40 +115,68 @@ document.addEventListener('DOMContentLoaded', () => {
      * Fetches and displays details for a single game.
      * @param {string} gameId - The RAWG ID of the game to fetch.
      */
-    async function fetchAndDisplayGameDetails(gameId) {
-        if (!gameId) return;
+async function fetchAndDisplayGameDetails(gameId) {
+    if (!gameId) return;
+    userHasTakenAction = true; // Mark that the user has taken an action
 
-        resultsGrid.style.display = 'none';
-        myCollectionContainer.style.display = 'none';
-        gameDetailContainer.innerHTML = '<p>Loading details...</p>';
-        gameDetailContainer.style.display = 'block';
+    // Hide other views and show this one with a loading message
+    resultsGrid.style.display = 'none';
+    myCollectionContainer.style.display = 'none';
+    gameDetailContainer.innerHTML = '<p>Loading details...</p>';
+    gameDetailContainer.style.display = 'block';
 
-        try {
-            const apiUrl = `http://localhost:8080/api/games/${gameId}`;
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error('Failed to fetch game details');
-            const details = await response.json();
+    try {
+        // Fetch the detailed game data from your backend
+        const apiUrl = `http://localhost:8080/api/games/${gameId}`;
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Failed to fetch game details');
+        const details = await response.json();
 
-            gameDetailContainer.innerHTML = `
-                <button id="backBtn">Back</button>
-                <h2>${details.name}</h2>
-                <img src="${details.background_image}" style="max-width: 100%; border-radius: 8px;" />
-                <p><strong>Rating:</strong> ${details.rating || 'N/A'}</p>
-                <div><strong>Description:</strong><br>${details.description_raw || 'No description available.'}</div>
-            `;
-            document.getElementById('backBtn').addEventListener('click', () => {
-                gameDetailContainer.style.display = 'none';
-                if (currentListView === 'collection') {
-                    myCollectionContainer.style.display = 'grid';
-                } else {
-                    resultsGrid.style.display = 'grid';
-                }
-            });
-        } catch (error) {
-            console.error("Error fetching details:", error);
-            gameDetailContainer.innerHTML = `<p>Error loading details.</p>`;
-        }
+        // New, improved HTML structure with CSS classes for styling
+        gameDetailContainer.innerHTML = `
+            <div class="game-detail-view">
+                <button id="backBtn" class="back-button">&larr; Back to List</button>
+                <div class="detail-header">
+                    <h1>${details.name}</h1>
+                    <div class="detail-rating">⭐ ${details.rating || 'N/A'}</div>
+                </div>
+                <div class="detail-main-content">
+                    <img class="detail-image" src="${details.background_image || 'assets/images/placeholder.jpg'}" alt="${details.name}">
+                    <div class="detail-info">
+                        <p><strong>Released:</strong> ${details.released || 'N/A'}</p>
+                        <p><strong>Genres:</strong> ${details.genres ? details.genres.map(g => g.name).join(', ') : 'N/A'}</p>
+                        <p><strong>Platforms:</strong> ${details.platforms ? details.platforms.map(p => p.platform.name).join(', ') : 'N/A'}</p>
+                        <p><strong>Developers:</strong> ${details.developers ? details.developers.map(d => d.name).join(', ') : 'N/A'}</p>
+                        ${details.website ? `<p><strong>Website:</strong> <a href="${details.website}" target="_blank" rel="noopener noreferrer">${details.website}</a></p>` : ''}
+                    </div>
+                </div>
+                <div class="detail-description">
+                    <h3>Description</h3>
+                    <p>${details.description_raw || 'No description available.'}</p>
+                </div>
+            </div>
+        `;
+
+        // Add the event listener for the new back button
+        document.getElementById('backBtn').addEventListener('click', () => {
+            userHasTakenAction = true;
+            gameDetailContainer.style.display = 'none';
+            // Return to the correct previous view
+            if (currentListView === 'collection') {
+                myCollectionContainer.style.display = 'grid';
+            } else {
+                resultsGrid.style.display = 'grid';
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching details:", error);
+        gameDetailContainer.innerHTML = `<p>Error loading details. Please try again.</p><button id="backBtnError">Back</button>`;
+        document.getElementById('backBtnError')?.addEventListener('click', () => {
+            gameDetailContainer.style.display = 'none';
+            resultsGrid.style.display = 'grid';
+        });
     }
+}
 
     // --- Authenticated Functions (Using Session Cookies) ---
 
