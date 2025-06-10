@@ -7,65 +7,206 @@
     <title>My Profile - GameScape</title>
     <!-- Link to a shared or a new CSS file -->
     <link rel="stylesheet" href="assets/css/search-style.css" />
-    <style>
-        /* Profile specific styles */
-        .profile-container {
-            max-width: 600px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  <style>
+        /* === General Page Setup === */
+        :root {
+            --primary-color: #6d28d9;
+            --primary-hover-color: #5b21b6;
+            --background-light: #f4f5f7;
+            --background-dark: #121212; /* Made the dark mode bg darker for contrast */
+            --card-background-light: rgba(255, 255, 255, 0.9); /* Semi-transparent for backdrop effect */
+            --card-background-dark: rgba(36, 37, 38, 0.9); /* Dark semi-transparent card */
+            --text-light: #e4e6eb;
+            --text-dark: #1d2129;
+            --border-light: #e0e0e0;
+            --border-dark: #3a3b3c;
+            --input-bg-light: #ffffff;
+            --input-bg-dark: #3a3b3c;
         }
+
+        /* MODIFIED: Added a background image to the body */
+        body {
+            /* Fallback color */
+            background-color: var(--background-light);
+            /* Background image - A cool retro gaming setup */
+            background-image: url('assets/images/profile_background.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed; /* Keep background fixed on scroll */
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            /* Dark mode still uses the same image but has a different fallback color */
+            background-color: var(--background-dark);
+        }
+
+        /* === Profile Container === */
+        .profile-container {
+            max-width: 650px;
+            margin: 3rem auto;
+            padding: 2.5rem;
+            background-color: var(--card-background-light);
+            color: var(--text-dark);
+            border-radius: 16px; /* Slightly more rounded */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+
+            /* Glassmorphism effect */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        body.dark-mode .profile-container {
+            background-color: var(--card-background-dark);
+            color: var(--text-light);
+            border-color: var(--border-dark);
+        }
+
         .profile-container h1 {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
         }
+        body.dark-mode .profile-container h1 {
+            color: var(--text-light);
+        }
+
+        /* === Avatar Section === */
+        .profile-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+        .profile-avatar img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-color);
+            padding: 4px;
+            background-color: var(--card-background-light);
+        }
+        body.dark-mode .profile-avatar img {
+             background-color: var(--input-bg-dark);
+        }
+
+        /* Custom styled file input */
+        .profile-avatar input[type="file"] {
+            display: none;
+        }
+        .profile-avatar label {
+            background-color: #f0f0f0;
+            color: #555;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .profile-avatar label:hover {
+            background-color: #e0e0e0;
+        }
+        body.dark-mode .profile-avatar label {
+            background-color: var(--input-bg-dark);
+            color: var(--text-light);
+        }
+        body.dark-mode .profile-avatar label:hover {
+            background-color: #4f5051;
+        }
+
+
+        /* === Form Styles === */
         .profile-form .input-group {
             margin-bottom: 1.5rem;
         }
         .profile-form label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 500;
+            font-weight: 600;
+            color: #555;
+        }
+        body.dark-mode .profile-form label {
+            color: #b0b3b8;
         }
         .profile-form input {
             width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            background-color: var(--input-bg-light);
+            color: var(--text-dark);
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
-        .profile-avatar {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
+        .profile-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2);
         }
-        .profile-avatar img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            background-color: #eee;
+        .profile-form input:disabled {
+            background-color: #f0f2f5;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
-        .profile-form button {
+        body.dark-mode .profile-form input {
+            background-color: var(--input-bg-dark);
+            border-color: var(--border-dark);
+            color: var(--text-light);
+        }
+        body.dark-mode .profile-form input:disabled {
+            background-color: #2d2e2f;
+        }
+
+        /* === Button Styles === */
+        .profile-form button[type="submit"] {
             width: 100%;
-            padding: 0.75rem;
-            background-color: #6d28d9;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 600;
             color: white;
+            background-image: linear-gradient(to right, #8b5cf6, #6d28d9);
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
+        .profile-form button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(109, 40, 217, 0.3);
+        }
+
+        /* === Feedback Messages === */
         .feedback-message {
             text-align: center;
-            padding: 10px;
-            margin-bottom: 1rem;
-            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
         }
-        .success { background-color: #dff0d8; color: #3c763d; }
-        .error { background-color: #f2dede; color: #a94442; }
+        .success { background-color: #d1fae5; color: #065f46; }
+        .error { background-color: #fee2e2; color: #991b1b; }
+
+        /* === Back Link === */
+        .back-link-container {
+             text-align: center;
+             margin-top: 2rem;
+        }
+        .back-link-container a {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        body.dark-mode .back-link-container a {
+             color: #b0b3b8;
+        }
+        .back-link-container a:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
