@@ -3,6 +3,7 @@
 // Import necessary libraries
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
@@ -20,9 +21,11 @@ const sequelize = new Sequelize({
 const User = sequelize.define('User', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   username: { type: DataTypes.STRING, allowNull: false },
-  email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true },
   password: { type: DataTypes.STRING, allowNull: false },
-  isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false }
+  isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false },
+  age: { type: DataTypes.INTEGER, allowNull: true },
+  avatar_url: { type: DataTypes.STRING, allowNull: true } // URL to the uploaded avatar
 }, { tableName: 'users' });
 
 const CollectedGame = sequelize.define('CollectedGame', {
@@ -51,6 +54,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+
+// +++ NEW: Serve the 'uploads' folder statically +++
+// This makes avatar images accessible to the browser via a URL like /uploads/filename.jpg
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // --- Configuration ---
 const port = process.env.PORT || 8080;
 const RAWG_API_KEY = '49019cbf03744419a483362b07d2f0a1'; // Your RAWG API Key
@@ -69,8 +77,8 @@ app.use(
     resave: false, // Don't save session if unmodified
     saveUninitialized: false, // Don't create session until something stored
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // Cookie/Session expires in 7 days
-      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7 // Cookie/Session expires in 7 days
+      // sameSite: 'lax',
       // secure: true, // Uncomment this in production if you are using HTTPS
     }
   })
@@ -81,11 +89,14 @@ app.use(
 const authRouter = require('./routes/auth')(User, bcrypt);
 const collectionRouter = require('./routes/collection')(CollectedGame);
 const gamesRouter = require('./routes/games')(RAWG_API_KEY, axios);
+// +++ NEW: Import profile router +++
+const profileRouter = require('./routes/profile')(User);
 
 // Mount the routers on specific paths
 app.use('/', authRouter); // For /register, /login, /logout
 app.use('/collection', collectionRouter);
 app.use('/api/games', gamesRouter);
+app.use('/profile', profileRouter); // +++ NEW: Mount the profile router
 
 // --- Initialize Database and Start Server ---
 async function initializeDatabaseAndStartServer() {

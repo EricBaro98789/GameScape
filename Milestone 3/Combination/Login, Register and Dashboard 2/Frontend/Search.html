@@ -24,10 +24,15 @@
             <a href="#">About</a>
         </nav>
         <div class="icons">
-            <span>🔔</span>
-            <a href="login.html" title="Login/Profile">
-                <span>👤</span>
-            </a>
+        <!-- A div to show login status -->
+        <div id="loggedInStatus" style="display: none; align-items: center; gap: 10px;"></div>
+        <span>🔔</span>
+        <a href="profile.html" title="My Profile">
+            <span>👤</span>
+        </a>
+
+        <!-- NEW: Logout Button (initially hidden) -->
+        <button type="button" id="logoutBtn" style="display:none; margin-left: 10px;">Logout</button>
         </div>
     </header>
 
@@ -46,10 +51,10 @@
         <div class="filters">
             <div class="popular-tags">
                 <strong>Popular Searches:</strong>
-                <span>Elden Ring</span>
                 <span>Mario Kart</span>
+                <span>GTA 6</span>
                 <span>Baldur's Gate 3</span>
-                <span>The Last of Us</span>
+                <span>Elden Ring</span>
             </div>
 
             <div class="platforms">

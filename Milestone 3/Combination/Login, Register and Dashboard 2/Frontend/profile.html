@@ -1,0 +1,106 @@
+<!-- FILE: Frontend/profile.html (NEW FILE) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Profile - GameScape</title>
+    <!-- Link to a shared or a new CSS file -->
+    <link rel="stylesheet" href="assets/css/search-style.css" />
+    <style>
+        /* Profile specific styles */
+        .profile-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .profile-container h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .profile-form .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .profile-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .profile-form input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .profile-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .profile-avatar img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #eee;
+        }
+        .profile-form button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #6d28d9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .feedback-message {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .success { background-color: #dff0d8; color: #3c763d; }
+        .error { background-color: #f2dede; color: #a94442; }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h1>My Profile</h1>
+
+        <div id="feedbackMessage" class="feedback-message" style="display:none;"></div>
+
+        <form id="profileForm">
+            <div class="profile-avatar">
+                <img id="avatarPreview" src="assets/images/placeholder.jpg" alt="Current Avatar">
+                <label for="avatar">Update Avatar</label>
+                <input type="file" id="avatar" name="avatar" accept="image/png, image/jpeg">
+            </div>
+
+            <div class="input-group">
+                <label for="email">Email (cannot be changed)</label>
+                <input type="email" id="email" name="email" disabled>
+            </div>
+
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+
+            <div class="input-group">
+                <label for="age">Age</label>
+                <input type="number" id="age" name="age">
+            </div>
+
+            <button type="submit">Update Profile</button>
+        </form>
+        <p style="text-align: center; margin-top: 1rem;"><a href="Search.html">&larr; Back to Search</a></p>
+    </div>
+
+    <script src="assets/js/profile.js"></script>
+</body>
+</html>
