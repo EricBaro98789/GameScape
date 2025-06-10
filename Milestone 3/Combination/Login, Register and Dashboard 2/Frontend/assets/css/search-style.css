@@ -4,14 +4,14 @@
     margin: 0;
     padding: 0;
   }
-  
+
   body {
     font-family: 'Segoe UI', sans-serif;
     background: #f9f9fb;
     color: #333;
     line-height: 1.6;
   }
-  
+
   /* Header */
   header {
     justify-content: space-between;
@@ -23,24 +23,24 @@
     z-index: 1;
     position: relative;
   }
-  
+
   .logo {
     font-weight: bold;
     font-size: 1.5rem;
   }
-  
+
   nav a {
     margin: 0 0.75rem;
     text-decoration: none;
     color: #333;
     font-weight: 500;
   }
-  
+
   .icons span {
     margin-left: 1rem;
     cursor: pointer;
   }
-  
+
   /* Main layout */
   main {
     background-color: #eee;
@@ -48,21 +48,21 @@
     max-width: 1200px;
     margin: auto;
     /*display: flex;*/
-    z-index: 1; 
-    position: relative; 
+    z-index: 1;
+    position: relative;
   }
-  
+
   .search-bar {
     margin-bottom: 1.5rem;
   }
-  
+
   .search-bar input {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid #ccc;
     border-radius: 8px;
   }
-  
+
   .filters {
     display: flex;
     flex-wrap: wrap;
@@ -70,7 +70,7 @@
     margin-bottom: 1.5rem;
     gap: 1rem;
   }
-  
+
   .popular-tags span,
   .platforms label {
     margin-right: 0.75rem;
@@ -79,13 +79,13 @@
     border-radius: 4px;
     font-size: 0.9rem;
   }
-  
+
   .sort-by {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
-  
+
   /* Game grid */
   .game-grid {
     display: grid;
@@ -93,7 +93,7 @@
     gap: 1.5rem;
     margin-bottom: 3rem;
   }
-  
+
   .game-card {
     background: white;
     border-radius: 8px;
@@ -102,29 +102,29 @@
     text-align: center;
     padding-bottom: 1rem;
   }
-  
+
   .game-card img {
     width: 100%;
     height: 140px;
     object-fit: cover;
   }
-  
+
   .game-card h4 {
     margin: 0.75rem 0 0.25rem;
     font-size: 1rem;
   }
-  
+
   .game-card .platform-icons {
     font-size: 0.9rem;
     color: #777;
   }
-  
+
   .game-card .rating {
     margin: 0.5rem 0;
     color: #eab308;
     font-weight: bold;
   }
-  
+
   .game-card button {
     background-color: #6d28d9;
     color: white;
@@ -134,11 +134,11 @@
     cursor: pointer;
     font-weight: 500;
   }
-  
+
   .game-card button:hover {
     background-color: #5b21b6;
   }
-  
+
   /* Footer */
   footer {
     background: #1f1f1f;
@@ -149,7 +149,7 @@
     z-index: 1;
     position: relative;
   }
-  
+
   .footer-columns {
     display: flex;
     flex-wrap: wrap;
@@ -157,22 +157,22 @@
     gap: 2rem;
     margin-bottom: 1rem;
   }
-  
+
   .footer-columns h4 {
     margin-bottom: 0.5rem;
   }
-  
+
   .footer-columns a {
     color: white;
     display: block;
     margin-bottom: 0.25rem;
     text-decoration: none;
   }
-  
+
   .footer-columns a:hover {
     text-decoration: underline;
   }
-  
+
   .footer-bottom {
     text-align: center;
     border-top: 1px solid #444;
@@ -200,3 +200,75 @@
     background: rgba(0, 0, 0, 0.4); /* 透明黑色 */
     z-index: 0; /* 在视频上，在文字下 */
   }
+
+  /* --- Dark Mode Styles --- */
+
+/* This applies when the body has the 'dark-mode' class */
+body.dark-mode {
+    background-color: #1c1e21; /* Dark background */
+}
+
+
+/* Make the video overlay a bit darker in dark mode */
+/* body.dark-mode .overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+} */
+
+/* Style for header and footer in dark mode */
+body.dark-mode header,
+body.dark-mode footer {
+    background-color: #242526;
+    border-bottom: 1px solid #3a3b3c;
+    box-shadow: none;
+}
+
+/* Text inside header and footer */
+body.dark-mode .logo,
+body.dark-mode nav a,
+body.dark-mode .icons span,
+body.dark-mode footer,
+body.dark-mode footer a {
+    color: #e4e6eb;
+}
+
+/* Search bar and other inputs */
+body.dark-mode .search-bar input,
+body.dark-mode .sort-by select {
+    background-color: #3a3b3c;
+    color: #e4e6eb;
+    border: 1px solid #555;
+}
+
+/* Game cards in dark mode */
+body.dark-mode .game-card {
+    background-color: #242526;
+    border: 1px solid #3a3b3c;
+}
+
+body.dark-mode .game-card h4 {
+    color: #e4e6eb;
+}
+
+/* Buttons in dark mode */
+body.dark-mode button {
+    background-color: #3a3b3c;
+    color: #e4e6eb;
+    border: 1px solid #555;
+}
+
+body.dark-mode button:hover {
+    background-color: #4f5051;
+}
+
+body.dark-mode #themeToggle {
+    border: 1px solid #e4e6eb;
+}
+
+
+#themeToggle {
+  position: fixed; /* Or 'absolute' depending on desired behavior */
+  top: 30px;
+  left: 200px;
+  z-index: 1000;  /* High number to ensure it's on top of everything */
+  cursor: pointer;
+}

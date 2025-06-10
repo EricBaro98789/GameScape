@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GameScape Search</title>
+    <link rel="stylesheet" href="assets/css/search-style.css" />
+</head>
+
+<body>
+    <button id="themeToggle">🌙 Toggle Dark/Light Mode</button>
+    <video autoplay muted loop id="bg-video">
+        <source src="assets/videos/gta.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div>
+    <header>
+        <div class="logo">GameScape</div>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#">Reviews</a>
+            <a href="#">News</a>
+            <a href="#">About</a>
+        </nav>
+        <div class="icons">
+            <span>🔔</span>
+            <a href="login.html" title="Login/Profile">
+                <span>👤</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="search-bar">
+            <input type="text" id="gameSearchInput" placeholder="Search for games..." />
+            <button type="button" id="gameSearchButton">Search</button>
+            <button type="button" id="loadCollectionBtn" style="margin-left: 10px;">My Collection</button>
+        </div>
+        <div class="export-buttons" style="margin-top: 10px;">
+            <button onclick="exportAsJSON()">Export as JSON</button>
+            <button onclick="exportAsCSV()">Export as CSV</button>
+        </div>
+
+
+        <div class="filters">
+            <div class="popular-tags">
+                <strong>Popular Searches:</strong>
+                <span>Elden Ring</span>
+                <span>Zelda</span>
+                <span>Baldur's Gate 3</span>
+                <span>Spider-Man 2</span>
+            </div>
+
+            <div class="platforms">
+                <strong>Platforms:</strong>
+                <label><input type="checkbox" /> PC</label>
+                <label><input type="checkbox" /> PS5</label>
+                <label><input type="checkbox" /> Xbox</label>
+                <label><input type="checkbox" /> Steam</label>
+                <label><input type="checkbox" /> Switch</label>
+            </div>
+
+            <div class="sort-by">
+                <label for="sort">Sort by:</label>
+                <select id="sort">
+                    <option>Most Popular</option>
+                    <option>Highest Rated</option>
+                    <option>Newest</option>
+                </select>
+            </div>
+        </div>
+
+        <p>Showing results</p>
+        <div class="game-grid" id="gameResultsGrid">
+        </div>
+
+        <div id="myCollectionContainer" class="game-grid" style="display:none;">
+        </div>
+
+    </main>
+
+    <footer>
+        <div class="footer-columns">
+            <div>
+                <h4>GameScape</h4>
+                <p>Your trusted source for game reviews and gaming content.</p>
+            </div>
+            <div>
+                <h4>Quick Links</h4>
+                <a href="#">About Us</a>
+                <a href="#">Contact</a>
+                <a href="#">Careers</a>
+                <a href="#">Advertise</a>
+            </div>
+            <div>
+                <h4>Legal</h4>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Use</a>
+                <a href="#">Cookie Policy</a>
+            </div>
+            <div>
+                <h4>Follow Us</h4>
+                <div class="social-icons">🐦 📘 📸 🎥 🎮</div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2025 GameScape. All rights reserved. </div>
+    </footer>
+    <script src="assets/js/search.js"></script>
+    <script>
+        const toggleButton = document.getElementById('themeToggle');
+        toggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        window.onload = function () {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+    </script>
+    <script>
+        function exportAsJSON() {
+            const games = [...document.querySelectorAll('#gameResultsGrid .game-card')].map(card => {
+                return {
+                    title: card.querySelector('.game-title')?.textContent || '',
+                    platform: card.querySelector('.game-platform')?.textContent || '',
+                    rating: card.querySelector('.game-rating')?.textContent || ''
+                };
+            });
+            const blob = new Blob([JSON.stringify(games, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            downloadFile(url, 'games.json');
+        }
+
+        function exportAsCSV() {
+            const rows = [['Title', 'Platform', 'Rating']];
+            const cards = document.querySelectorAll('#gameResultsGrid .game-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.game-title')?.textContent || '';
+                const platform = card.querySelector('.game-platform')?.textContent || '';
+                const rating = card.querySelector('.game-rating')?.textContent || '';
+                rows.push([title, platform, rating]);
+            });
+            const csvContent = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            downloadFile(url, 'games.csv');
+        }
+
+        function downloadFile(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+    </script>
+
+</body>
+
+</html>

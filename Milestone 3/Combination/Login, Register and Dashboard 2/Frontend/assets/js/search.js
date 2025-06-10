@@ -289,14 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function setInitialViewState() {
-        resultsGrid.innerHTML = '<p>Search for a game to begin!</p>';
-        myCollectionContainer.style.display = 'none';
-        gameDetailContainer.style.display = 'none';
-        resultsGrid.style.display = 'grid';
-    }
+
 
     // --- Initial Actions on Page Load ---
     checkLoginStatus();
-    setInitialViewState(); // Set the initial blank search state
 });
