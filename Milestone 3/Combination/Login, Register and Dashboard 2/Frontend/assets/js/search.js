@@ -353,15 +353,28 @@ async function fetchAndDisplayGameDetails(gameId) {
 
     function checkLoginStatus() {
         const username = localStorage.getItem("username");
+        const isAdmin = localStorage.getItem("isAdmin") === 'true'; // Checks the stored string
+
+        // Hide all user-specific elements by default
+        if (loggedInStatus) loggedInStatus.style.display = 'none';
+        if (logoutButton) logoutButton.style.display = 'none';
+        if (adminLink) adminLink.style.display = 'none';
+
+        // If a user is logged in, show their info
         if (username) {
             if (loggedInStatus) {
                 loggedInStatus.textContent = `Welcome, ${username}`;
-                loggedInStatus.style.display = 'inline';
+                loggedInStatus.style.display = 'inline-flex';
             }
-            if(logoutButton) logoutButton.style.display = 'inline-block';
-        } else {
-             if (logoutButton) logoutButton.style.display = 'none';
-             if (loggedInStatus) loggedInStatus.style.display = 'none';
+            if (logoutButton) {
+                logoutButton.style.display = 'inline-block';
+            }
+
+            // CORRECTED LOGIC: Now, if the user is an admin, show the admin link.
+            // This is now correctly placed to run for any logged-in user.
+            if (isAdmin && adminLink) {
+                adminLink.style.display = 'inline-block';
+            }
         }
     }
 

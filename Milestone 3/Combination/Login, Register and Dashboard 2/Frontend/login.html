@@ -92,6 +92,7 @@
                     if (result.user && result.user.username) {
                         // Store username in localStorage so other pages know the user is logged in
                         localStorage.setItem("username", result.user.username);
+                        localStorage.setItem("isAdmin", result.user.isAdmin);
 
                         // Redirect to the main search page
                         window.location.href = 'Search.html';
