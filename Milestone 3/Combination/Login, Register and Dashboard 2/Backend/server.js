@@ -26,6 +26,7 @@ const User = sequelize.define('User', {
   password: { type: DataTypes.STRING, allowNull: false },
   isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false },
   avatar_url: { type: DataTypes.STRING, allowNull: true },
+  age: { type: DataTypes.INTEGER, allowNull: true },
   address: { type: DataTypes.STRING, allowNull: true }
 }, { tableName: 'users' });
 
@@ -280,8 +281,11 @@ adminRouter.put('/users/:id/update', upload.single("avatar"), async (req, res) =
 });
 
 
+const profileRouter = require('./routes/profile')(User);
+
 // Mount the admin router under the /admin path
 app.use('/admin', adminRouter);
+app.use('/profile', profileRouter);
 
 
 // --- Initialize and Start Server ---
