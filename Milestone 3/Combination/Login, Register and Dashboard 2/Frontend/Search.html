@@ -24,14 +24,12 @@
             <a href="#">About</a>
         </nav>
         <div class="icons">
-        <!-- A div to show login status -->
         <div id="loggedInStatus" style="display: none; align-items: center; gap: 10px;"></div>
         <span>🔔</span>
         <a href="profile.html" title="My Profile">
             <span>👤</span>
         </a>
 
-        <!-- NEW: Logout Button (initially hidden) -->
         <button type="button" id="logoutBtn" style="display:none; margin-left: 10px;">Logout</button>
         </div>
     </header>
@@ -42,9 +40,10 @@
             <button type="button" id="gameSearchButton">Search</button>
             <button type="button" id="loadCollectionBtn" style="margin-left: 10px;">My Collection</button>
         </div>
-        <div class="export-buttons" style="margin-top: 10px;">
-            <button onclick="exportAsJSON()">Export as JSON</button>
-            <button onclick="exportAsCSV()">Export as CSV</button>
+
+        <div class="export-buttons" style="margin-top: 10px; display:none;">
+            <button type="button" id="exportJsonBtn">Export as JSON</button>
+            <button type="button" id="exportCsvBtn">Export as CSV</button>
         </div>
 
 
@@ -113,7 +112,7 @@
             &copy; 2025 GameScape. All rights reserved. </div>
     </footer>
     <script src="assets/js/search.js"></script>
-    <script>
+    <!-- <script>
         const toggleButton = document.getElementById('themeToggle');
         toggleButton.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
@@ -162,7 +161,7 @@
             a.download = filename;
             a.click();
         }
-    </script>
+    </script> -->
 
 </body>
 

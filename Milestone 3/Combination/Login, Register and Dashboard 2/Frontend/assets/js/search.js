@@ -10,9 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadCollectionButton = document.getElementById('loadCollectionBtn');
     const logoutButton = document.getElementById('logoutBtn'); // Assumes you have a button with id="logoutBtn"
     const loggedInStatus = document.getElementById('loggedInStatus'); // Assumes a div with this id
+    const themeToggleButton = document.getElementById('themeToggle');
+    // +++ NEW: References for export buttons +++
+    const exportButtonsContainer = document.querySelector('.export-buttons');
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
 
     // --- State Variable for View Management ---
     let currentListView = 'search'; // Tracks if the last list view was 'search' or 'collection'
+    // +++ NEW: Variable to hold collection data for exporting +++
+    let currentUserCollection = [];
 
     // --- Dynamic Container Creation ---
     if (!gameDetailContainer) {
@@ -38,15 +45,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loadCollectionButton) loadCollectionButton.addEventListener('click', loadAndDisplayUserCollection);
     if (logoutButton) logoutButton.addEventListener('click', logoutUser);
 
+    if (themeToggleButton) themeToggleButton.addEventListener('click', toggleTheme);
+    // +++ NEW: Event listeners for export buttons +++
+    if (exportJsonBtn) exportJsonBtn.addEventListener('click', exportAsJSON);
+    if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportAsCSV);
+
     resultsGrid.addEventListener('click', (event) => handleCardClick(event));
     myCollectionContainer.addEventListener('click', (event) => handleCardClick(event));
 
+    // --- Theme Toggle Logic (Moved from HTML) ---
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    }
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    }
+
     // --- Core Functions ---
 
-    /**
-     * Generic click handler for game cards to delegate actions.
-     * @param {Event} event - The click event.
-     */
     async function handleCardClick(event) {
         const target = event.target;
         if (target.classList.contains('view-details-btn')) {
@@ -63,11 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Renders an array of games into the appropriate container.
-     * @param {Array} gamesArray - The array of game objects to display.
-     * @param {boolean} isUserCollection - True if rendering the user's collection.
-     */
+
     function displayGames(gamesArray, isUserCollection = false) {
         const containerToUse = isUserCollection ? myCollectionContainer : resultsGrid;
         containerToUse.innerHTML = '';
@@ -77,6 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsGrid.style.display = isUserCollection ? 'none' : 'grid';
         myCollectionContainer.style.display = isUserCollection ? 'grid' : 'none';
         gameDetailContainer.style.display = 'none';
+
+        // +++ NEW: Show export buttons only when viewing the collection +++
+        exportButtonsContainer.style.display = isUserCollection ? 'block' : 'none';
 
         if (!gamesArray || gamesArray.length === 0) {
             containerToUse.innerHTML = isUserCollection ?
@@ -111,10 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /**
-     * Fetches and displays details for a single game.
-     * @param {string} gameId - The RAWG ID of the game to fetch.
-     */
+
 async function fetchAndDisplayGameDetails(gameId) {
     if (!gameId) return;
     userHasTakenAction = true; // Mark that the user has taken an action
@@ -228,12 +244,67 @@ async function fetchAndDisplayGameDetails(gameId) {
                 throw new Error(result.error || 'Failed to load collection');
             }
             const userCollection = await response.json();
+
+            // +++ NEW: Store collection data for export +++
+            currentUserCollection = userCollection;
+
             displayGames(userCollection, true);
         } catch (error) {
             console.error("Error loading collection:", error);
             myCollectionContainer.innerHTML = `<p>${error.message}</p>`;
         }
     }
+
+    // +++ NEW: Export Functions (Moved from HTML and Corrected) +++
+    function downloadFile(url, filename) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a); // Required for Firefox
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function exportAsJSON() {
+        if (currentUserCollection.length === 0) {
+            alert("Your collection is empty. Nothing to export.");
+            return;
+        }
+        // Create a cleaner version of the data for export
+        const dataToExport = currentUserCollection.map(game => ({
+            rawgId: game.rawgGameId,
+            title: game.gameTitle,
+            rating: game.rating,
+            imageUrl: game.gameImage,
+            dateAdded: game.createdAt
+        }));
+
+        const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        downloadFile(url, 'my-game-collection.json');
+    }
+
+    function exportAsCSV() {
+        if (currentUserCollection.length === 0) {
+            alert("Your collection is empty. Nothing to export.");
+            return;
+        }
+        const headers = '"RAWG ID","Title","Rating","Image URL","Date Added"';
+        const rows = currentUserCollection.map(game => {
+            const id = game.rawgGameId;
+            // Handle commas in title by wrapping in quotes and escaping existing quotes
+            const title = `"${(game.gameTitle || '').replace(/"/g, '""')}"`;
+            const rating = game.rating || 'N/A';
+            const imageUrl = `"${game.gameImage || ''}"`;
+            const dateAdded = `"${new Date(game.createdAt).toLocaleDateString()}"`;
+            return [id, title, rating, imageUrl, dateAdded].join(',');
+        });
+
+        const csvContent = [headers, ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        downloadFile(url, 'my-game-collection.csv');}
 
     async function removeFromUserCollection(rawgGameId) {
         if (!localStorage.getItem("username")) {
@@ -320,5 +391,6 @@ async function fetchAndDisplayGameDetails(gameId) {
 
 
     // --- Initial Actions on Page Load ---
+    applySavedTheme();
     checkLoginStatus();
 });
