@@ -112,56 +112,6 @@
             &copy; 2025 GameScape. All rights reserved. </div>
     </footer>
     <script src="assets/js/search.js"></script>
-    <!-- <script>
-        const toggleButton = document.getElementById('themeToggle');
-        toggleButton.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        });
-
-        window.onload = function () {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-            }
-        }
-    </script>
-    <script>
-        function exportAsJSON() {
-            const games = [...document.querySelectorAll('#gameResultsGrid .game-card')].map(card => {
-                return {
-                    title: card.querySelector('.game-title')?.textContent || '',
-                    platform: card.querySelector('.game-platform')?.textContent || '',
-                    rating: card.querySelector('.game-rating')?.textContent || ''
-                };
-            });
-            const blob = new Blob([JSON.stringify(games, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            downloadFile(url, 'games.json');
-        }
-
-        function exportAsCSV() {
-            const rows = [['Title', 'Platform', 'Rating']];
-            const cards = document.querySelectorAll('#gameResultsGrid .game-card');
-            cards.forEach(card => {
-                const title = card.querySelector('.game-title')?.textContent || '';
-                const platform = card.querySelector('.game-platform')?.textContent || '';
-                const rating = card.querySelector('.game-rating')?.textContent || '';
-                rows.push([title, platform, rating]);
-            });
-            const csvContent = rows.map(r => r.join(',')).join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            downloadFile(url, 'games.csv');
-        }
-
-        function downloadFile(url, filename) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-        }
-    </script> -->
 
 </body>
 

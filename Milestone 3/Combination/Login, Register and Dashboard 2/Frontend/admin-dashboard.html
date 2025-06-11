@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - GameScape</title>
+    <link rel="stylesheet" href="assets/css/admin-style.css">
+</head>
+<body>
+    <header>
+        <h1>GameScape Admin Dashboard</h1>
+        <div>
+            <a href="Search.html">Back to Main Site</a>
+            <button type="button" id="logoutBtnAdmin" style="margin-left: 15px;">Logout</button>
+        </div>
+    </header>
+    <main>
+        <div id="adminError" class="feedback-message error" style="display:none;"></div>
+        <div class="dashboard-section">
+            <h2>User Management</h2>
+            <div id="userListContainer">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Is Admin?</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- User rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- You could add other sections here later, like "Add New User" -->
+    </main>
+    <script src="assets/js/admin.js"></script>
+</body>
+</html>
