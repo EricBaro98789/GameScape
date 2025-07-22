@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Details - Cyberpunk 2077</title>
+  <link rel="stylesheet" href="assets/css/User Favorite Page.css">
+</head>
+
+<body>
+  <header>
+    <div class="nav-bar">
+      <span class="logo">🎮 GameScape</span>
+      <input type="text" placeholder="Search games...">
+      <div class="nav-icons">🔔 👤</div>
+    </div>
+  </header>
+
+  <div class="game-banner">
+    <img src="cyberpunk-banner.jpg" alt="Cyberpunk 2077">
+    <div class="banner-title">
+      <h1>Cyberpunk 2077</h1>
+      <!--<div class="platform-icons"></div>-->
+    </div>
+  </div>
+
+  <main class="details">
+    <section class="game-stats">
+      <div class="stat"><strong>⭐ Rating</strong>
+        <p>9.2/10</p>
+      </div>
+      <div class="stat"><strong>👥 Players</strong>
+        <p>1.2M</p>
+      </div>
+      <div class="stat"><strong>⏱ Playtime</strong>
+        <p>45h</p>
+      </div>
+      <div class="stat"><strong>🏆 Achievements</strong>
+        <p>128</p>
+      </div>
+    </section>
+
+    <section class="main-content">
+      <div class="left-column">
+        <div class="about">
+          <h2>About This Game</h2>
+          <p>Embark on an epic journey in Cyberpunk 2077, where you'll explore a vast open world set in a dystopian
+            future. As a legendary mercenary, you'll navigate through the neon-lit streets of Night City, taking on
+            dangerous missions and making choices that will shape the fate of the city.</p>
+          <p>The game features cutting-edge graphics, an immersive story, and deep character customization.</p>
+        </div>
+
+        <div class="screenshots">
+          <h2>Screenshots</h2>
+          <div class="grid">
+            <img src="screenshot1.jpg" alt="Screenshot 1">
+            <img src="screenshot2.jpg" alt="Screenshot 2">
+            <img src="screenshot3.jpg" alt="Screenshot 3">
+            <img src="screenshot4.jpg" alt="Screenshot 4">
+          </div>
+        </div>
+
+        <div class="requirements">
+          <h2>System Requirements</h2>
+          <div class="specs">
+            <div>
+              <h3>Minimum</h3>
+              <p>OS: Windows 10 64-bit</p>
+              <p>Processor: Intel Core i5-4670K</p>
+              <p>Memory: 8 GB RAM</p>
+              <p>Graphics: NVIDIA GTX 1060 6GB</p>
+              <p>Storage: 70 GB available space</p>
+            </div>
+            <div>
+              <h3>Recommended</h3>
+              <p>OS: Windows 10 64-bit</p>
+              <p>Processor: Intel Core i7-8700K</p>
+              <p>Memory: 16 GB RAM</p>
+              <p>Graphics: NVIDIA RTX 3070</p>
+              <p>Storage: 70 GB SSD</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="right-panel">
+        <div class="price">$59.99 <span class="stars">⭐⭐⭐⭐☆ (4.2)</span></div>
+        <h3>Add to Library</h3>
+        <label>Play Status</label>
+        <select>
+          <option>WishList</option>
+          <option>Currently Playing</option>
+          <option>Completed</option>
+        </select>
+
+        <label>Hours Played</label>
+        <input type="number" placeholder="0">
+
+        <label>Your Rating</label>
+        <div class="stars-input">⭐ ⭐ ⭐ ⭐ ⭐</div>
+
+        <label>Personal Tags</label>
+        <div class="tags">
+          <span>RPG</span>
+          <span>Story-rich</span>
+          <span>Open World</span>
+        </div>
+        <input type="text" placeholder="Add tags...">
+
+        <label>Personal Notes</label>
+        <textarea placeholder="Write your thoughts about the game..."></textarea>
+
+        <button class="save-btn">Save to Library</button>
+      </aside>
+    </section>
+
+    <div class="export-buttons" style="margin: 20px;">
+      <button onclick="exportFavoritesJSON()">Export Favorites as JSON</button>
+      <button onclick="exportFavoritesCSV()">Export Favorites as CSV</button>
+    </div>
+
+  </main>
+  <script>
+    function exportFavoritesJSON() {
+      const data = {
+        title: document.querySelector('.banner-title h1')?.textContent || '',
+        rating: document.querySelector('.stat:nth-child(1) p')?.textContent || '',
+        players: document.querySelector('.stat:nth-child(2) p')?.textContent || '',
+        playtime: document.querySelector('.stat:nth-child(3) p')?.textContent || '',
+        achievements: document.querySelector('.stat:nth-child(4) p')?.textContent || ''
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      downloadFile(url, 'favorite.json');
+    }
+
+    function exportFavoritesCSV() {
+      const headers = ['Title', 'Rating', 'Players', 'Playtime', 'Achievements'];
+      const values = [
+        document.querySelector('.banner-title h1')?.textContent || '',
+        document.querySelector('.stat:nth-child(1) p')?.textContent || '',
+        document.querySelector('.stat:nth-child(2) p')?.textContent || '',
+        document.querySelector('.stat:nth-child(3) p')?.textContent || '',
+        document.querySelector('.stat:nth-child(4) p')?.textContent || ''
+      ];
+      const csvContent = headers.join(',') + '\n' + values.join(',');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      downloadFile(url, 'favorite.csv');
+    }
+
+    function downloadFile(url, filename) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+    }
+  </script>
+
+</body>
+
+</html>

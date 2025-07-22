@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>GameScape Dashboard</title>
+  <link rel="stylesheet" href="assets/css/dashboard.css" />
+</head>
+
+<body>
+  <button id="themeToggle">🌙 Toggle Dark/Light Mode</button>
+
+  <div class="container">
+    <h1>GameScape</h1>
+
+    <div class="search-box">
+      <input type="text" id="searchBox" placeholder="Search for games" />
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="section">
+      <h2>Search Results</h2>
+      <div id="results"></div>
+    </div>
+
+    <!-- Add export button -->
+    <div style="margin-bottom: 10px;">
+      <button id="exportJSON">Export as JSON</button>
+      <button id="exportCSV">Export as CSV</button>
+    </div>
+
+    <div class="section">
+      <h2>My Collection</h2>
+      <button id="collectionBtn">Load Collection</button>
+      <div id="collection"></div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("searchBtn").addEventListener("click", searchGames);
+      document.getElementById("collectionBtn").addEventListener("click", loadCollection);
+    });
+
+    async function searchGames() {
+      const query = document.getElementById("searchBox").value;
+      const response = await fetch(`http://localhost:8080/api/games/search?query=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      const results = document.getElementById("results");
+      results.innerHTML = ""; // Clear old results
+
+      data.results.forEach(function (game) {
+        const gameDiv = document.createElement("div");
+        gameDiv.className = "game-card";
+        gameDiv.innerHTML = `
+          <h3>${game.name}</h3>
+          <img src="${game.background_image}" width="200" />
+          <button>Add to Collection</button>
+        `;
+
+        const button = gameDiv.querySelector("button");
+        button.addEventListener("click", function () {
+          addToCollection(game);
+          button.disabled = true;
+          button.textContent = "✔ Collected";
+        });
+
+        results.appendChild(gameDiv);
+      });
+    }
+
+    async function addToCollection(game) {
+      const token = localStorage.getItem("token");
+      await fetch("/collection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token,
+        },
+        body: JSON.stringify({
+          gameId: game.id,
+          gameTitle: game.name,
+          gameImage: game.background_image,
+        }),
+      });
+    }
+
+    async function loadCollection() {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/collection", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      const data = await response.json();
+
+      const collectionDiv = document.getElementById("collection");
+      collectionDiv.innerHTML = ""; // Clear old content
+
+      data.forEach(function (item) {
+        const gameDiv = document.createElement("div");
+        gameDiv.className = "game-card";
+        gameDiv.innerHTML = `
+          <h4>${item.gameTitle}</h4>
+          <img src="${item.gameImage}" width="150" />
+        `;
+        collectionDiv.appendChild(gameDiv);
+      });
+    }
+  </script>
+
+  <!-- 管理员功能区域 -->
+  <div id="admin-section" style="display:none; margin-top: 40px;">
+    <h2>Admin: User Management</h2>
+    <table id="userTable" border="1" cellpadding="8" cellspacing="0">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Change Role</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody">
+        <!-- 用户数据将被 JS 插入 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const toggleButton = document.getElementById('themeToggle');
+    toggleButton.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+
+    // 页面加载时根据保存的主题自动切换
+    window.onload = function () {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+    }
+  </script>
+
+
+</body>
+
+</html>
